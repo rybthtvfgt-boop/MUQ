@@ -1,8 +1,5 @@
 [phases.setup]
 nixPkgs = ["python311", "mariadb"]
 
-[phases.build]
-cmds = ["cd mysql"]
-
 [start]
 cmd = "cd mysql && python database.py"
