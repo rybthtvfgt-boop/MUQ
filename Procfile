@@ -1,1 +1,1 @@
-web: gunicorn --bind 0.0.0.0:$PORT --workers 4 --timeout 120 mysql.database:app
+web: gunicorn --bind 0.0.0.0:${PORT:-8080} --workers 1 --timeout 120 app:app
