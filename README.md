@@ -267,16 +267,55 @@ python database.py
 ## 📦 النشر
 
 ### Railway (موصى به)
+
+#### إعداد المشروع لـ Railway
+المشروع مجهز بالكامل للاستضافة في Railway بدون تعديلات إضافية.
+
+#### خطوات النشر:
+
+1. **تثبيت Railway CLI**
 ```bash
-# تثبيت Railway CLI
 npm install -g @railway/cli
+```
 
-# تسجيل الدخول
+2. **تسجيل الدخول**
+```bash
 railway login
+```
 
-# نشر المشروع
+3. **إنشاء مشروع جديد**
+```bash
+railway init
+```
+
+4. **إضافة قاعدة بيانات MySQL**
+```bash
+railway add mysql
+```
+
+5. **إعداد متغيرات البيئة**
+```bash
+railway variables set DATABASE_URL=mysql://default:password@host:port/dbname
+railway variables set SECRET_KEY=your-secret-key
+```
+
+6. **نشر المشروع**
+```bash
 railway up
 ```
+
+#### الملفات المهمة لـ Railway:
+- `railway.json` - إعدادات Railway
+- `nixpacks.toml` - إعدادات Nixpacks (استخدام Python 3.11 + MariaDB)
+- `Procfile` - أوامر التشغيل
+- `requirements.txt` - مكتبات Python (بدون ML للسرعة)
+- `Dockerfile` - تكوين Docker (بديل)
+
+#### الملاحظات:
+- النظام يستخدم lazy loading للـ ML Backend لتجنب timeouts في النشر
+- قاعدة البيانات SQLite يتم استخدامها تلقائياً إذا لم يتم إعداد MySQL
+- الصحة الصحية للنظام: `/api/health`
+- المنفذ الافتراضي: 8080
 
 ### Docker
 ```bash

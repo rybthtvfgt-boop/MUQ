@@ -84,3 +84,12 @@ temp/
 
 # Scripts output
 /tmp/
+
+# ML Models and Training
+models/
+*.h5
+*.hdf5
+*.keras
+*.pb
+training_history.json
+*training_*.py
