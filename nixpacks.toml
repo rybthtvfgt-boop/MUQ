@@ -1,5 +1,13 @@
+<<<<<<< HEAD
 [phases.setup]
 nixPkgs = ["python311", "mariadb"]
 
 [start]
 cmd = "cd mysql && python database.py"
+=======
+[phases.setup]
+nixPkgs = ["python311", "mariadb"]
+
+[start]
+cmd = "cd mysql && python database.py"
+>>>>>>> aaaf63bf1772415f7d1c06f2c0429cb5a2437f99
