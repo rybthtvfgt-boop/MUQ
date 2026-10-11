@@ -1,0 +1,16 @@
+[phases.setup]
+nixPkgs = ["python311", "mysql"]
+
+[phases.build]
+cmds = [
+  "python -m venv /opt/venv",
+  ". /opt/venv/bin/activate",
+  "pip install --upgrade pip",
+  "pip install -r requirements.txt"
+]
+
+[start]
+cmd = "python mysql/database.py"
+
+[variables]
+PYTHON_VERSION = "3.11"

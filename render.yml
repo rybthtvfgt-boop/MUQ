@@ -1,0 +1,7 @@
+version: 1
+env: python
+build:
+  commands:
+    - pip install --upgrade pip
+    - pip install -r requirements.txt
+start: gunicorn mysql.database:app
