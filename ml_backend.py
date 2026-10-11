@@ -13,6 +13,7 @@ import json
 import os
 from typing import Dict, List, Tuple, Optional
 import logging
+import threading
 
 # إعداد التسجيل
 logging.basicConfig(level=logging.INFO)
@@ -26,12 +27,18 @@ class FaceRecognitionML:
         self.model = None
         self.face_detector = None
         self.model_loaded = False
+        self.loading = False
 
     def load_model(self):
         """تحميل نموذج التعرف على الوجه"""
+        if self.model_loaded or self.loading:
+            return
+        
+        self.loading = True
         try:
             # تحميل نموذج TensorFlow للتعرف على الوجه
             # استخدام MobileNetV2 لكشف الوجه
+            logger.info("جاري تحميل MobileNetV2...")
             self.model = tf.keras.applications.MobileNetV2(
                 weights='imagenet',
                 include_top=False,
@@ -55,7 +62,10 @@ class FaceRecognitionML:
             return True
         except Exception as e:
             logger.error(f"خطأ في تحميل نموذج ML: {e}")
+            self.model_loaded = False
             return False
+        finally:
+            self.loading = False
 
     def detect_faces(self, image: np.ndarray) -> List[Dict]:
         """كشف الوجوه في الصورة باستخدام OpenCV"""
@@ -146,6 +156,7 @@ class SmokingDetector:
     def __init__(self):
         self.model = None
         self.model_loaded = False
+        self.loading = False
         # استخدم أفضل نموذج (best) بدلاً من النهائي
         # احصل على المسار الصحيح للمجلد الحالي
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -153,6 +164,10 @@ class SmokingDetector:
 
     def load_model(self):
         """تحميل نموذج كشف التدخين"""
+        if self.model_loaded or self.loading:
+            return
+        
+        self.loading = True
         try:
             # التحقق من وجود النموذج المدرب
             if os.path.exists(self.model_path):
@@ -191,7 +206,10 @@ class SmokingDetector:
                 return True
         except Exception as e:
             logger.error(f"خطأ في تحميل نموذج التدخين: {e}")
+            self.model_loaded = False
             return False
+        finally:
+            self.loading = False
 
     def detect_smoking(self, image: np.ndarray) -> Dict:
         """كشف ما إذا كان الشخص يدخن"""
@@ -199,6 +217,13 @@ class SmokingDetector:
             self.load_model()
 
         try:
+            if not self.model_loaded:
+                return {
+                    'is_smoking': False,
+                    'confidence': 0.0,
+                    'label': 'model_unavailable'
+                }
+
             # معالجة الصورة مسبقاً
             img = cv2.resize(image, (224, 224))
             img = img.astype(np.float32) / 255.0
@@ -230,9 +255,14 @@ class CheatingDetector:
     def __init__(self):
         self.model = None
         self.model_loaded = False
+        self.loading = False
 
     def load_model(self):
         """تحميل نموذج كشف الغش"""
+        if self.model_loaded or self.loading:
+            return
+        
+        self.loading = True
         try:
             # تحميل نموذج مدرب مسبقاً لكشف الغش
             self.model = tf.keras.Sequential([
@@ -260,7 +290,10 @@ class CheatingDetector:
             return True
         except Exception as e:
             logger.error(f"خطأ في تحميل نموذج الغش: {e}")
+            self.model_loaded = False
             return False
+        finally:
+            self.loading = False
 
     def detect_cheating(self, image: np.ndarray) -> Dict:
         """كشف سلوك الغش"""
@@ -268,6 +301,13 @@ class CheatingDetector:
             self.load_model()
 
         try:
+            if not self.model_loaded:
+                return {
+                    'status': 'model_unavailable',
+                    'confidence': 0.0,
+                    'probabilities': {'normal': 0, 'suspicious': 0, 'cheating': 0}
+                }
+
             # معالجة الصورة مسبقاً
             img = cv2.resize(image, (224, 224))
             img = img.astype(np.float32) / 255.0
@@ -306,6 +346,7 @@ class ExamAnomalyDetector:
         self.model = None
         self.threshold = None
         self.model_loaded = False
+        self.loading = False
         # احصل على المسار الصحيح للمجلد الحالي
         current_dir = os.path.dirname(os.path.abspath(__file__))
         self.model_path = os.path.join(current_dir, 'models', 'exam_anomaly_best.h5')
@@ -313,6 +354,10 @@ class ExamAnomalyDetector:
 
     def load_model(self):
         """تحميل نموذج كشف الشذوذ وعتبة الكشف"""
+        if self.model_loaded or self.loading:
+            return
+        
+        self.loading = True
         try:
             # التحقق من وجود النموذج المدرب
             if os.path.exists(self.model_path):
@@ -341,11 +386,16 @@ class ExamAnomalyDetector:
             else:
                 logger.warning(f"نموذج الشذوذ المدرب غير موجود في {self.model_path}")
                 logger.info("سيستخدم كشف شذوذ الامتحانات وضع العنصر النائب")
+                self.threshold = 0.011170
                 return False
         except Exception as e:
             logger.error(f"خطأ في تحميل نموذج الشذوذ: {e}")
             logger.info("سيستخدم كشف شذوذ الامتحانات وضع العنصر النائب")
+            self.threshold = 0.011170
+            self.model_loaded = False
             return False
+        finally:
+            self.loading = False
 
     def detect_anomaly(self, image: np.ndarray) -> Dict:
         """كشف ما إذا كانت الصورة تحتوي على حالة غير طبيعية"""
@@ -405,13 +455,25 @@ class MLBackend:
         self.exam_anomaly_detector = ExamAnomalyDetector()
 
     def initialize(self):
-        """تهيئة جميع نماذج التعلم الآلي"""
-        logger.info("جاري تهيئة ML Backend...")
-        self.face_recognition.load_model()
-        self.smoking_detector.load_model()
-        self.cheating_detector.load_model()
-        self.exam_anomaly_detector.load_model()
-        logger.info("تم تهيئة ML Backend بنجاح")
+        """تهيئة ML Backend بدون تحميل النماذج (lazy loading)"""
+        logger.info("ML Backend initialized (lazy loading enabled)")
+        # لا نحمل النماذج هنا - سيتم تحميلها عند الاستخدام الأول
+
+    def warm_up_in_background(self):
+        """تحميل النماذج في الخلفية (اختياري)"""
+        def load_models():
+            try:
+                logger.info("Warming up ML models in background...")
+                self.face_recognition.load_model()
+                self.smoking_detector.load_model()
+                self.cheating_detector.load_model()
+                self.exam_anomaly_detector.load_model()
+                logger.info("Model warm-up completed")
+            except Exception as e:
+                logger.warning(f"Background warm-up failed: {e}")
+        
+        thread = threading.Thread(target=load_models, daemon=True)
+        thread.start()
 
     def process_image(self, image_data: str, task: str = 'face_recognition') -> Dict:
         """
