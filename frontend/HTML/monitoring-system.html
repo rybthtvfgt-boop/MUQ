@@ -63,6 +63,8 @@
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 4px 20px var(--brand-glow);
+            pointer-events: auto !important;
+            z-index: 10;
         }
 
         .train-model-btn:hover {
@@ -598,13 +600,13 @@
             <h1>نظام المراقبة الذكي</h1>
             <p>مراقبة القاعات والكشف عن المخالفات باستخدام الذكاء الاصطناعي</p>
             <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
-                <button class="train-model-btn" id="trainSmokingBtn" onclick="openTrainingModal('smoking')">
+                <button class="train-model-btn" id="trainSmokingBtn" onclick="openTrainingModal('smoking')" onmousedown="console.log('Smoking button clicked')">
                     🚀 تدريب التدخين
                 </button>
-                <button class="train-model-btn" id="trainExamBtn" onclick="openTrainingModal('exam')">
-                    � تدريب الامتحانات
+                <button class="train-model-btn" id="trainExamBtn" onclick="openTrainingModal('exam')" onmousedown="console.log('Exam button clicked')">
+                    📝 تدريب الامتحانات
                 </button>
-                <button class="train-model-btn" id="trainDangerBtn" onclick="openTrainingModal('danger')">
+                <button class="train-model-btn" id="trainDangerBtn" onclick="openTrainingModal('danger')" onmousedown="console.log('Danger button clicked')">
                     ⚠️ تدريب الأخطار
                 </button>
             </div>
@@ -733,20 +735,7 @@
 
     <script src="../Js/api-client.js"></script>
     <script>
-        // Training Modal
-        const trainingModal = document.getElementById('trainingModal');
-        const progressFill = document.getElementById('progressFill');
-        const progressText = document.getElementById('progressText');
-        const trainingLog = document.getElementById('trainingLog');
-        const startTrainingBtn = document.getElementById('startTrainingBtn');
-        const modelNameInput = document.getElementById('modelNameInput');
-
-        // Monitoring Modal
-        const monitoringModal = document.getElementById('monitoringModal');
-        const monitoringCamera = document.getElementById('monitoringCamera');
-        const monitoringModalTitle = document.getElementById('monitoringModalTitle');
-        const alertsList = document.getElementById('alertsList');
-
+        // Global variables
         let isTraining = false;
         let isMonitoring = false;
         let videoStream = null;
@@ -764,20 +753,85 @@
             }
         };
 
+        // Initialize variables
+        let trainingModal, progressFill, progressText, trainingLog, startTrainingBtn, modelNameInput;
+        let monitoringModal, monitoringCamera, monitoringModalTitle, alertsList;
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Training Modal
+            trainingModal = document.getElementById('trainingModal');
+            progressFill = document.getElementById('progressFill');
+            progressText = document.getElementById('progressText');
+            trainingLog = document.getElementById('trainingLog');
+            startTrainingBtn = document.getElementById('startTrainingBtn');
+            modelNameInput = document.getElementById('modelNameInput');
+
+            // Monitoring Modal
+            monitoringModal = document.getElementById('monitoringModal');
+            monitoringCamera = document.getElementById('monitoringCamera');
+            monitoringModalTitle = document.getElementById('monitoringModalTitle');
+            alertsList = document.getElementById('alertsList');
+
+            // Ensure training buttons are enabled
+            document.querySelectorAll('.train-model-btn').forEach(btn => {
+                btn.disabled = false;
+                btn.classList.remove('active');
+                console.log('Button enabled:', btn.id);
+            });
+
+            // Add event listeners as backup
+            document.getElementById('trainSmokingBtn').addEventListener('click', function() {
+                console.log('Smoking button clicked via addEventListener');
+                openTrainingModal('smoking');
+            });
+
+            document.getElementById('trainExamBtn').addEventListener('click', function() {
+                console.log('Exam button clicked via addEventListener');
+                openTrainingModal('exam');
+            });
+
+            document.getElementById('trainDangerBtn').addEventListener('click', function() {
+                console.log('Danger button clicked via addEventListener');
+                openTrainingModal('danger');
+            });
+
+            console.log('DOM loaded and elements initialized');
+            console.log('Training buttons enabled');
+        });
+
         // Open training modal with preset
         function openTrainingModal(type) {
+            console.log('openTrainingModal called with type:', type);
+            console.log('trainingModal:', trainingModal);
+            console.log('modelNameInput:', modelNameInput);
+
+            if (!trainingModal || !modelNameInput) {
+                console.error('Training modal elements not initialized');
+                alert('Error: Modal elements not loaded. Please refresh the page.');
+                return;
+            }
             const preset = trainingPresets[type];
             if (preset) {
                 modelNameInput.value = preset.name;
             }
             trainingModal.classList.add('active');
+            console.log('Modal opened successfully');
         }
 
         function closeTrainingModal() {
+            if (!trainingModal) {
+                console.error('Training modal not initialized');
+                return;
+            }
             trainingModal.classList.remove('active');
         }
 
         function addLogEntry(message, type = 'info') {
+            if (!trainingLog) {
+                console.error('Training log not initialized');
+                return;
+            }
             const entry = document.createElement('div');
             entry.className = `log-entry ${type}`;
             entry.textContent = message;
@@ -788,10 +842,10 @@
         async function startTraining() {
             if (isTraining) return;
 
-            const modelName = document.getElementById('modelNameInput').value || 'تدريب التدخين';
+            const modelName = document.getElementById('modelNameInput')?.value || 'تدريب التدخين';
 
             isTraining = true;
-            startTrainingBtn.disabled = true;
+            if (startTrainingBtn) startTrainingBtn.disabled = true;
 
             // Disable all training buttons
             document.querySelectorAll('.train-model-btn').forEach(btn => {
@@ -818,13 +872,13 @@
                     const error = await response.json();
                     addLogEntry(`فشل بدء التدريب: ${error.error}`, 'error');
                     isTraining = false;
-                    startTrainingBtn.disabled = false;
+                    if (startTrainingBtn) startTrainingBtn.disabled = false;
                     enableTrainingButtons();
                 }
             } catch (error) {
                 addLogEntry(`خطأ في الاتصال: ${error.message}`, 'error');
                 isTraining = false;
-                startTrainingBtn.disabled = false;
+                if (startTrainingBtn) startTrainingBtn.disabled = false;
                 enableTrainingButtons();
             }
         }
@@ -848,10 +902,10 @@
                     const data = await response.json();
                     addLogEntry('تم إعادة التعيين بنجاح', 'success');
                     isTraining = false;
-                    startTrainingBtn.disabled = false;
+                    if (startTrainingBtn) startTrainingBtn.disabled = false;
                     enableTrainingButtons();
-                    progressFill.style.width = '0%';
-                    progressText.textContent = 'جاهز';
+                    if (progressFill) progressFill.style.width = '0%';
+                    if (progressText) progressText.textContent = 'جاهز';
                 } else {
                     const error = await response.json();
                     addLogEntry(`فشل إعادة التعيين: ${error.error}`, 'error');
@@ -870,21 +924,21 @@
 
                         if (data.status === 'completed') {
                             clearInterval(pollInterval);
-                            progressFill.style.width = '100%';
-                            progressText.textContent = 'اكتمل التدريب!';
+                            if (progressFill) progressFill.style.width = '100%';
+                            if (progressText) progressText.textContent = 'اكتمل التدريب!';
                             addLogEntry('تم اكتمال التدريب بنجاح', 'success');
                             isTraining = false;
-                            startTrainingBtn.disabled = false;
+                            if (startTrainingBtn) startTrainingBtn.disabled = false;
                             enableTrainingButtons();
                         } else if (data.status === 'failed') {
                             clearInterval(pollInterval);
                             addLogEntry(`فشل التدريب: ${data.error_message}`, 'error');
                             isTraining = false;
-                            startTrainingBtn.disabled = false;
+                            if (startTrainingBtn) startTrainingBtn.disabled = false;
                             enableTrainingButtons();
                         } else {
-                            progressFill.style.width = `${data.progress}%`;
-                            progressText.textContent = `${data.progress}% - ${data.current_step}`;
+                            if (progressFill) progressFill.style.width = `${data.progress}%`;
+                            if (progressText) progressText.textContent = `${data.progress}% - ${data.current_step}`;
                             if (data.current_step) {
                                 addLogEntry(data.current_step, 'info');
                             }
@@ -894,7 +948,7 @@
                     clearInterval(pollInterval);
                     addLogEntry(`خطأ في متابعة التدريب: ${error.message}`, 'error');
                     isTraining = false;
-                    startTrainingBtn.disabled = false;
+                    if (startTrainingBtn) startTrainingBtn.disabled = false;
                     enableTrainingButtons();
                 }
             }, 2000);
@@ -902,6 +956,10 @@
 
         // Monitoring Modal
         function openMonitoringModal(type) {
+            if (!monitoringModal || !monitoringModalTitle) {
+                console.error('Monitoring modal elements not initialized');
+                return;
+            }
             const titles = {
                 smoking: 'مراقبة التدخين',
                 exam: 'مراقبة الامتحانات',
@@ -913,6 +971,10 @@
         }
 
         function closeMonitoringModal() {
+            if (!monitoringModal) {
+                console.error('Monitoring modal not initialized');
+                return;
+            }
             monitoringModal.classList.remove('active');
             stopMonitoring();
         }
@@ -922,7 +984,7 @@
 
             try {
                 videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
-                monitoringCamera.srcObject = videoStream;
+                if (monitoringCamera) monitoringCamera.srcObject = videoStream;
                 isMonitoring = true;
                 addAlert('تم تشغيل الكاميرا بنجاح');
             } catch (error) {
@@ -935,7 +997,7 @@
                 videoStream.getTracks().forEach(track => track.stop());
                 videoStream = null;
             }
-            monitoringCamera.srcObject = null;
+            if (monitoringCamera) monitoringCamera.srcObject = null;
             isMonitoring = false;
         }
 
@@ -954,6 +1016,10 @@
         }
 
         function addAlert(message, time = null) {
+            if (!alertsList) {
+                console.error('Alerts list not initialized');
+                return;
+            }
             if (!time) {
                 time = new Date().toLocaleTimeString('ar-SA');
             }
@@ -974,9 +1040,13 @@
 
         // Update stats
         function updateStats() {
-            document.getElementById('activeCameras').textContent = Math.floor(Math.random() * 5) + 1;
-            document.getElementById('alertsToday').textContent = Math.floor(Math.random() * 20) + 5;
-            document.getElementById('totalDetections').textContent = Math.floor(Math.random() * 100) + 50;
+            const activeCamerasEl = document.getElementById('activeCameras');
+            const alertsTodayEl = document.getElementById('alertsToday');
+            const totalDetectionsEl = document.getElementById('totalDetections');
+
+            if (activeCamerasEl) activeCamerasEl.textContent = Math.floor(Math.random() * 5) + 1;
+            if (alertsTodayEl) alertsTodayEl.textContent = Math.floor(Math.random() * 20) + 5;
+            if (totalDetectionsEl) totalDetectionsEl.textContent = Math.floor(Math.random() * 100) + 50;
         }
 
         updateStats();
