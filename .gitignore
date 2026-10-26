@@ -36,5 +36,33 @@ Desktop.ini
 # Logs
 *.log
 
-# Backups (optional - uncomment to exclude from git)
-# _backups/
+# Python
+*.pyc
+__pycache__/
+
+# Database
+*.sqlite3
+*.db
+
+# Axon Robot (external project)
+Axon-Robot-main/
+UCF_Crimes/
+CCTV-Exam -Monitor -Dataset/
+dataset/
+trained_models/
+professional_training/
+AL/
+
+# Backups
+_backups/
+
+# Temporary files
+*.tmp
+*.temp
+*_backup.html
+*_REPORT.md
+*_GUIDE.md
+*_STATUS.md
+FINAL_SUMMARY.md
+HEALTH_REPORT.md
+DESIGN_IMPROVEMENTS.md

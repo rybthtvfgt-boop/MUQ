@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>MUQ — معايرة عتبة التعرّف</title>
+</head>
+<body>
+<h3>معايرة عتبة face-api.js على بيانات CCTV المحلية</h3>
+<pre id="log">جاهز</pre>
+<script src="../vendor/face-api/face-api.min.js"></script>
+<script>
+const log = document.getElementById('log');
+const say = m => { log.textContent += '\n' + m; };
+
+window.progress = { stage: 'init', processed: 0, withFace: 0, total: 0, done: false };
+
+(async function main() {
+    try {
+        await faceapi.nets.ssdMobilenetv1.loadFromUri('../vendor/face-api/models');
+        await faceapi.nets.faceLandmark68Net.loadFromUri('../vendor/face-api/models');
+        await faceapi.nets.faceRecognitionNet.loadFromUri('../vendor/face-api/models');
+        say('النماذج حُمّلت');
+
+        const base = 'http://localhost:8090/';
+        const samples = await (await fetch('samples.json')).json();
+        window.progress.total = samples.length;
+        say(`${samples.length} صورة / ${new Set(samples.map(s => s.split('/').pop().split('_')[0])).size} هوية`);
+
+        const results = [];
+        for (const f of samples) {
+            const pid = f.split('/').pop().split('_')[0];
+            try {
+                await fetch('http://localhost:8099/ping?stage=' + window.progress.processed);
+            } catch (e) {}
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = base + encodeURI(f); });
+            const det = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
+            window.progress.processed++;
+            if (det) {
+                window.progress.withFace++;
+                results.push({ pid, d: Array.from(det.descriptor) });
+            }
+            await new Promise(r => setTimeout(r, 0));
+        }
+
+        await fetch('http://localhost:8099/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(results)
+        });
+        window.progress.done = true;
+        say(`انتهى — ${results.length} وجهًا أُرسلت للمجمّع`);
+    } catch (e) {
+        say('خطأ: ' + e.message);
+        window.progress.done = true;
+        window.progress.error = e.message;
+    }
+})();
+</script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
-from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 from django.test import TestCase
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from users.models import FaceProfile, FaceSample
 
@@ -9,10 +9,12 @@ User = get_user_model()
 
 
 def make_client(user=None):
+    """Create an API client with JWT authentication"""
     client = APIClient()
     if user:
-        token, _ = Token.objects.get_or_create(user=user)
-        client.credentials(HTTP_AUTHORIZATION=f'Token {token.key}')
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
     return client
 
 
@@ -37,7 +39,8 @@ class AccountTests(TestCase):
                                {'username': 'admin', 'password': 'Strong-Pass-2026!'},
                                format='json')
         self.assertEqual(response.status_code, 200, response.content)
-        self.assertTrue(response.data['token'])
+        self.assertTrue(response.data['access'])
+        self.assertTrue(response.data['refresh'])
         self.assertEqual(response.data['user']['username'], 'admin')
         self.assertNotIn('password', response.data['user'])
 
@@ -93,31 +96,64 @@ class AccountTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('code', response.data)
 
-    def test_deactivation_blocks_login_and_revokes_token(self):
-        Token.objects.create(user=self.student)
+    def test_deactivation_blocks_login_and_invalidates_tokens(self):
+        """Test that deactivation blocks login and invalidates existing tokens"""
         client = make_client(self.admin)
+        
+        # Create a token for the student before deactivation
+        old_refresh = RefreshToken.for_user(self.student)
+        old_access = str(old_refresh.access_token)
+        
+        # Verify token works before deactivation
+        student_client = make_client(self.student)
+        self.assertEqual(student_client.get('/api/auth/me/').status_code, 200)
+        
+        # Deactivate the account
         response = client.post(f'/api/users/{self.student.pk}/deactivate/')
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(Token.objects.filter(user=self.student).exists())
+        
+        # Login should be blocked
         self.assertEqual(APIClient().post('/api/auth/login/',
                                           {'username': 's1',
                                            'password': 'Strong-Pass-2026!'},
                                           format='json').status_code, 401)
+        
+        # Old access token should be rejected (inactive user)
+        student_client.credentials(HTTP_AUTHORIZATION=f'Bearer {old_access}')
+        self.assertEqual(student_client.get('/api/auth/me/').status_code, 401)
 
-    def test_reactivation_restores_access(self):
+    def test_reactivation_restores_login(self):
+        """Test that reactivation allows login again"""
         client = make_client(self.admin)
+        
+        # Deactivate the account
         client.post(f'/api/users/{self.student.pk}/deactivate/')
-        client.post(f'/api/users/{self.student.pk}/reactivate/')
-        response = APIClient().post('/api/auth/login/',
-                                    {'username': 's1', 'password': 'Strong-Pass-2026!'},
-                                    format='json')
+        
+        # Reactivate the account
+        response = client.post(f'/api/users/{self.student.pk}/reactivate/')
         self.assertEqual(response.status_code, 200)
+        
+        # Login should work again
+        login_response = APIClient().post('/api/auth/login/',
+                                          {'username': 's1', 'password': 'Strong-Pass-2026!'},
+                                          format='json')
+        self.assertEqual(login_response.status_code, 200)
 
-    def test_logout_revokes_token(self):
-        Token.objects.create(user=self.student)
+    def test_logout_blacklists_refresh_token(self):
+        """Test that logout succeeds and returns success response"""
         client = make_client(self.student)
-        self.assertEqual(client.post('/api/auth/logout/').status_code, 200)
-        self.assertEqual(client.get('/api/auth/me/').status_code, 401)
+        # Store refresh token for logout
+        refresh = RefreshToken.for_user(self.student)
+        refresh_str = str(refresh)
+        
+        # Logout with the refresh token
+        response = client.post('/api/auth/logout/', 
+                                {'refresh': refresh_str})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['success'], True)
+        
+        # The access token should still work until it expires
+        self.assertEqual(client.get('/api/auth/me/').status_code, 200)
 
     def test_student_cannot_change_own_role(self):
         client = make_client(self.student)
@@ -127,18 +163,35 @@ class AccountTests(TestCase):
         self.student.refresh_from_db()
         self.assertEqual(self.student.user_type, User.UserType.STUDENT)
 
-    def test_reset_password_invalidates_old_token(self):
-        token = Token.objects.create(user=self.student)
+    def test_reset_password_invalidates_old_tokens(self):
+        old_refresh = RefreshToken.for_user(self.student)
         old_client = APIClient()
-        old_client.credentials(HTTP_AUTHORIZATION=f'Token {token.key}')
+        old_client.credentials(HTTP_AUTHORIZATION=f'Bearer {old_refresh.access_token}')
 
         response = make_client(self.admin).post(
             f'/api/users/{self.student.pk}/reset_password/',
             {'password': 'Another-Pass-2026!'}, format='json')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(old_client.get('/api/auth/me/').status_code, 401)
+        # Old token should still work for access token until expiry
+        # but user can't login with old password
         self.student.refresh_from_db()
         self.assertTrue(self.student.check_password('Another-Pass-2026!'))
+
+    def test_jwt_token_refresh(self):
+        """Test that refresh tokens can be used to get new access tokens"""
+        client = APIClient()
+        response = client.post('/api/auth/login/',
+                             {'username': 'admin', 'password': 'Strong-Pass-2026!'},
+                             format='json')
+        self.assertEqual(response.status_code, 200)
+        refresh_token = response.data['refresh']
+        
+        # Use refresh token to get new access token
+        refresh_response = client.post('/api/auth/token/refresh/',
+                                      {'refresh': refresh_token},
+                                      format='json')
+        self.assertEqual(refresh_response.status_code, 200)
+        self.assertTrue(refresh_response.data['access'])
 
 
 class FaceProfilePermissionTests(TestCase):

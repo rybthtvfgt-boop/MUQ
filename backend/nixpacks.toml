@@ -1,0 +1,12 @@
+[phases.setup]
+nixPkgs = ["python311", "postgresql"]
+
+[phases.build]
+cmds = ["pip install -r requirements.txt"]
+
+[start]
+cmd = "gunicorn muq_system.wsgi:application --bind 0.0.0.0:$PORT --workers 4 --threads 2"
+
+[variables]
+PYTHON_VERSION = "3.11"
+PORT = "8000"

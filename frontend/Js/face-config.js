@@ -4,11 +4,17 @@
 const FACE_CONFIG = {
     // إعدادات التخزين
     STORAGE: {
-        // نوع التخزين: 'local' أو 'mysql'
-        TYPE: 'mysql', // MySQL: تخزين جميع البيانات في MySQL
-        // إعدادات MySQL
-        API_URL: 'http://localhost:5000',
-        // إعدادات localStorage (fallback فقط)
+        // نوع التخزين: 'mysql' = خادم Django (المصدر الوحيد للحقيقة)
+        // 'local' متوافق قديم فقط ولا يُعتمد عليه للحضور الرسمي
+        TYPE: 'mysql',
+        // عنوان خادم Django: محلياً على المنفذ 8000 (نفس عقد api-client.js)،
+        // وفي النشر نفس نطاق الموقع (whitenoise/railway).
+        // IMPORTANT: If frontend and backend are on different domains in production,
+        // configure BACKEND_URL environment variable or change this logic.
+        API_URL: (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+            ? 'http://localhost:8000'
+            : (window.BACKEND_URL || window.location.origin),
+        // إعدادات localStorage (تخزين مؤقت للعرض فقط — ليس سجل حضور)
         LOCAL_KEY_PREFIX: 'muq_'
     },
 
@@ -20,7 +26,12 @@ const FACE_CONFIG = {
         POSES: {
             front: 1,
             right_15: 1,
-            left_15: 1
+            left_15: 1,
+            // Additional poses with explicit counts (not used in current registration flow)
+            right_30: 0,
+            left_30: 0,
+            up: 0,
+            down: 0
         }
     },
 
@@ -35,8 +46,9 @@ const FACE_CONFIG = {
 
     // إعدادات النماذج
     MODELS: {
-        // مسارات نماذج face-api.js (CDN)
-        MODELS_URL: 'https://justadudewhohacks.github.io/face-api.js/models',
+        // نماذج face-api.js محلية (frontend/vendor/face-api/models) —
+        // لا تحميل خارجي: القوالب البيومترية لا تمر عبر خدمات第三方 والنظام يعمل دون إنترنت.
+        MODELS_URL: '../vendor/face-api/models',
         // النماذج المطلوبة
         SSD_MOBILENET_V1: 'ssd_mobilenetv1_model-weights_manifest.json',
         FACE_LANDMARK_68: 'face_landmark_68_model-weights_manifest.json',

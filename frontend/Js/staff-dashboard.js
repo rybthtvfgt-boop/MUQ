@@ -1,17 +1,25 @@
+// Security helper: escape HTML to prevent XSS
+function escapeHtml(text) {
+    if (text === null || text === undefined) return '';
+    const div = document.createElement('div');
+    div.textContent = String(text);
+    return div.innerHTML;
+}
+
 // Staff Dashboard System
 let currentUser = null;
 let staffVideoStream = null;
 let currentStaff = null;
 
 // Check authentication
-function checkAuth() {
-    const userStr = localStorage.getItem('currentUser');
-    if (!userStr) {
+async function checkAuth() {
+    const user = await api.getCurrentUser();
+    if (!user) {
         window.location.href = 'login.html';
         return null;
     }
-    const user = JSON.parse(userStr);
-    if (user.type !== 'administrative' && user.type !== 'security' && user.type !== 'service') {
+    const userType = user.user_type || user.type;
+    if (userType !== 'administrative' && userType !== 'security' && userType !== 'service') {
         window.location.href = 'login.html';
         return null;
     }
@@ -19,8 +27,8 @@ function checkAuth() {
 }
 
 // Initialize
-document.addEventListener('DOMContentLoaded', function() {
-    currentUser = checkAuth();
+document.addEventListener('DOMContentLoaded', async function() {
+    currentUser = await checkAuth();
     if (currentUser) {
         loadStaffInfo();
         loadOverview();
@@ -52,8 +60,8 @@ function loadStaffInfo() {
     }
 }
 
-function logout() {
-    localStorage.removeItem('currentUser');
+async function logout() {
+    await api.logout();
     window.location.href = 'login.html';
 }
 
@@ -265,8 +273,8 @@ function loadHistory() {
     myAttendance.forEach(record => {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${record.date}</td>
-            <td>${new Date(record.timestamp).toLocaleTimeString('ar-SA')}</td>
+            <td>${escapeHtml(record.date)}</td>
+            <td>${escapeHtml(new Date(record.timestamp).toLocaleTimeString('ar-SA'))}</td>
             <td><span class="status ${record.status}">${getStatusText(record.status)}</span></td>
         `;
         tbody.appendChild(row);

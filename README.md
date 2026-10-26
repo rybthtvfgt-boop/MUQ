@@ -92,15 +92,87 @@ Frontend سيكون متاح على `http://localhost:8010`
 
 ## 🌐 النشر
 
-### Backend على Railway
+### النشر على Railway
 
-راجع [backend/DEPLOYMENT.md](backend/DEPLOYMENT.md) للتعليمات التفصيلية.
+#### الخطوة 1: إعداد Railway
 
-### Frontend على Netlify/Vercel
+1. سجل الدخول إلى [Railway](https://railway.app)
+2. أنشئ مشروع جديد
+3. قم بربط مستودع GitHub الخاص بك
 
-1. Connect your Git repository
-2. Set publish directory to `frontend`
-3. Deploy
+#### الخطوة 2: إعداد المتغيرات البيئية
+
+في Railway، أضف المتغيرات التالية:
+
+```
+DEBUG=False
+SECRET_KEY=<your-secret-key>
+DB_ENGINE=postgresql
+DB_NAME=<database-name>
+DB_USER=<database-user>
+DB_PASSWORD=<database-password>
+DB_HOST=<database-host>
+DB_PORT=5432
+ALLOWED_HOSTS=<your-railway-app-url>
+```
+
+#### الخطوة 3: النشر التلقائي
+
+- Railway سيقوم بالنشر تلقائياً عند كل push إلى الفرع `main`
+- GitHub Actions ستعمل CI/CD تلقائياً
+
+### النشر على GitHub
+
+#### الخطوة 1: إنشاء مستودع GitHub
+
+```bash
+cd F:\MUQ
+git init
+git add .
+git commit -m "Initial commit"
+git branch -M main
+git remote add origin https://github.com/your-username/muq-system.git
+git push -u origin main
+```
+
+#### الخطوة 2: إعداد GitHub Secrets
+
+في GitHub repository settings، أضف:
+- `RAILWAY_TOKEN`: Railway API token
+- `SECRET_KEY`: Django secret key
+- `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`: بيانات قاعدة البيانات
+
+### النشر على Render
+
+بديل لـ Railway:
+
+1. سجل الدخول إلى [Render](https://render.com)
+2. أنشئ New Web Service
+3. Connect your GitHub repository
+3. استخدم `backend/render.yaml` للإعدادات
+
+### النشر المحلي
+
+#### Backend (Django)
+
+```bash
+cd backend
+python -m venv venv
+venv\Scripts\activate  # Windows
+# source venv/bin/activate  # Linux/Mac
+pip install -r requirements.txt
+copy .env.example .env  # Windows
+# cp .env.example .env  # Linux/Mac
+python manage.py migrate
+python create_admin.py
+python manage.py runserver
+```
+
+Backend سيكون متاح على `http://localhost:8000`
+
+#### بيانات تسجيل الدخول الافتراضية:
+- **اسم المستخدم**: admin
+- **كلمة المرور**: admin123
 
 ## المميزات
 

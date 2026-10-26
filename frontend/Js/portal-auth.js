@@ -16,16 +16,14 @@ function getPortalSessionUser() {
     }
 }
 
-// تسجيل الطالب/المدرس/الموظف لوجهه بنفسه: نوع ومعرّف الرابط يطابقان حسابه
+// تسجيل الطالب/المدرس/الموظف لوجهه بنفسه: الرابط يحمل نوع ومعرّف نفس الحساب
 function isSelfRegistration(user) {
     const params = new URLSearchParams(window.location.search);
     const type = params.get('type');
     const id = parseInt(params.get('id'), 10);
 
     if (!type || !id) return false;
-    if (type === 'student') return user.type === 'student' && user.studentId === id;
-    if (type === 'teacher') return user.type === 'teacher' && user.teacherId === id;
-    return user.type === type && user.staffType === type && user.staffId === id;
+    return user.user_type === type && user.id === id;
 }
 
 // يُستدعى من <head> قبل تنفيذ أي كود آخر في الصفحة
@@ -38,7 +36,8 @@ function requirePortalAccess(portalKey, options) {
         return false;
     }
 
-    const isPortalOperator = user.type === portalKey || user.type === 'admin';
+    const isAdmin = user.user_type === 'admin' || user.user_type === 'super_admin' || user.is_superuser;
+    const isPortalOperator = user.user_type === portalKey || isAdmin;
     if (!isPortalOperator && !(allowSelfRegistration && isSelfRegistration(user))) {
         window.location.replace('login.html?denied=' + portalKey);
         return false;

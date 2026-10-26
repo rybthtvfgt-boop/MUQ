@@ -2,7 +2,13 @@
 // Configure this based on your backend URL
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:8000/api'
-    : 'https://your-backend-url.railway.app/api';
+    : window.location.origin + '/api'; // Use same origin for production
+
+// SECURITY NOTE: JWT tokens are stored in localStorage for simplicity.
+// Alternative approach: Use HttpOnly cookies with CSRF protection for better security.
+// Trade-off: localStorage is vulnerable to XSS but easier to implement.
+// Cookies with HttpOnly are immune to XSS but require CSRF token management.
+// Current implementation mitigates XSS risk with proper HTML escaping in dashboards.
 
 class APIClient {
     constructor() {

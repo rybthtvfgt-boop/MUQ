@@ -6,13 +6,16 @@ let targetPerson = null;
 let isRegistering = false;
 let registrationInterval = null;
 let currentPoseIndex = 0;
-let poses = ['front', 'right_15', 'right_30', 'left_15', 'left_30', 'up', 'down', 'unknown'];
+let poses = [];
 let acceptedCount = 0;
 let rejectedCount = 0;
 let blinkChallengePassed = false;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async function() {
+    // Initialize poses from config
+    poses = Object.keys(FACE_CONFIG.REGISTRATION.POSES).filter(pose => FACE_CONFIG.REGISTRATION.POSES[pose] > 0);
+    
     // Check URL parameters first
     const urlParams = new URLSearchParams(window.location.search);
     const type = urlParams.get('type');
@@ -33,15 +36,30 @@ document.addEventListener('DOMContentLoaded', async function() {
     startCamera();
 });
 
-const PICKER_GROUPS = {
-    student: { label: 'طالب', list: () => db.getStudents() },
-    teacher: { label: 'مدرس', list: () => db.getTeachers() },
-    administrative: { label: 'موظف إداري', list: () => db.getAdministrativeStaff() },
-    security: { label: 'موظف أمني', list: () => db.getSecurityStaff() },
-    service: { label: 'موظف خدمة', list: () => db.getServiceStaff() }
-};
-
 // بوابة التسجيل تُفتح بلا شخص محدّد — نعرض شاشة اختيار بدل القفز إلى صفحة الدخول
+const PICKER_TYPES = [
+    { key: 'student', label: 'طالب' },
+    { key: 'teacher', label: 'مدرس' },
+    { key: 'administrative', label: 'موظف إداري' },
+    { key: 'security', label: 'موظف أمني' },
+    { key: 'service', label: 'موظف خدمة' }
+];
+
+// قائمة الأشخاص من خادم Django (المصدر الوحيد للهويات) — معرّف User.pk
+// هو ما يُرسل للسيرفر عند الحفظ، لا معرّفات localStorage القديمة.
+async function djangoPeople(userType) {
+    const response = await fetch(
+        `${FACE_CONFIG.STORAGE.API_URL}/api/users/?user_type=${userType}`,
+        { headers: faceStorage.authHeaders() });
+    if (!response.ok) {
+        throw new Error(response.status === 401 || response.status === 403
+            ? 'هذه البوابة تتطلب حساب مشرف أو قسم التسجيل'
+            : 'تعذّر جلب قائمة الأشخاص من الخادم');
+    }
+    const data = await response.json();
+    return (data.results || data).map(u => ({ id: u.id, name: u.name, idNumber: u.code }));
+}
+
 function showPersonPicker() {
     const container = document.querySelector('.face-registration-container');
     container.style.display = 'none';
@@ -59,27 +77,34 @@ function showPersonPicker() {
             <label for="pickerPerson">الاسم</label>
             <select id="pickerPerson"></select>
         </div>
+        <p id="pickerError" style="color:#f87171; display:none;"></p>
         <button class="btn-primary" onclick="startPickerRegistration()">بدء تسجيل الوجه</button>
     `;
     container.parentNode.appendChild(picker);
 
     const typeSelect = picker.querySelector('#pickerType');
-    typeSelect.innerHTML = Object.keys(PICKER_GROUPS)
-        .map(key => `<option value="${key}">${PICKER_GROUPS[key].label}</option>`)
-        .join('');
+    typeSelect.innerHTML = PICKER_TYPES
+        .map(t => `<option value="${t.key}">${t.label}</option>`).join('');
     typeSelect.addEventListener('change', fillPickerPeople);
 
     fillPickerPeople();
 }
 
 async function fillPickerPeople() {
-    const group = PICKER_GROUPS[document.getElementById('pickerType').value];
+    const group = document.getElementById('pickerType').value;
     const personSelect = document.getElementById('pickerPerson');
-    const people = await group.list();
-
-    personSelect.innerHTML = people.length
-        ? people.map(p => `<option value="${p.id}">${p.name}${p.idNumber ? ' — ' + p.idNumber : ''}</option>`).join('')
-        : '<option value="">لا يوجد مسجلون في هذه الفئة</option>';
+    const errorBox = document.getElementById('pickerError');
+    try {
+        const people = await djangoPeople(group);
+        errorBox.style.display = 'none';
+        personSelect.innerHTML = people.length
+            ? people.map(p => `<option value="${p.id}">${p.name}${p.idNumber ? ' — ' + p.idNumber : ''}</option>`).join('')
+            : '<option value="">لا يوجد مسجلون في هذه الفئة</option>';
+    } catch (error) {
+        errorBox.textContent = error.message;
+        errorBox.style.display = 'block';
+        personSelect.innerHTML = '<option value="">— تعذّر التحميل —</option>';
+    }
 }
 
 function startPickerRegistration() {
@@ -93,22 +118,19 @@ function startPickerRegistration() {
     window.location.href = `face-registration-new.html?type=${type}&id=${id}`;
 }
 
-function loadPersonInfo() {
-    let person;
-    if (targetPerson.type === 'student') {
-        person = db.getStudentById(targetPerson.id);
-    } else if (targetPerson.type === 'teacher') {
-        person = db.getTeacherById(targetPerson.id);
-    } else if (targetPerson.type === 'administrative') {
-        person = db.getAdministrativeStaff().find(s => s.id === targetPerson.id);
-    } else if (targetPerson.type === 'security') {
-        person = db.getSecurityStaff().find(s => s.id === targetPerson.id);
-    } else if (targetPerson.type === 'service') {
-        person = db.getServiceStaff().find(s => s.id === targetPerson.id);
-    }
-
-    if (person) {
-        document.getElementById('personName').textContent = `تسجيل وجه: ${person.name}`;
+async function loadPersonInfo() {
+    try {
+        const response = await fetch(
+            `${FACE_CONFIG.STORAGE.API_URL}/api/users/${targetPerson.id}/`,
+            { headers: faceStorage.authHeaders() });
+        if (!response.ok) throw new Error(String(response.status));
+        const person = await response.json();
+        document.getElementById('personName').textContent =
+            `تسجيل وجه: ${person.name}${person.code ? ' — ' + person.code : ''}`;
+    } catch (error) {
+        document.getElementById('personName').textContent = 'تعذّر التحقق من بيانات الشخص من الخادم';
+        updateMessage('لا يمكن بدء التسجيل قبل تحميل هوية الشخص من الخادم', 'error');
+        document.getElementById('startBtn').disabled = true;
     }
 }
 
@@ -184,7 +206,7 @@ async function captureLoop() {
         updateMessage(`تم التقاط عينة ${acceptedCount}/${FACE_CONFIG.REGISTRATION.TARGET_SAMPLES}`, 'success');
 
         // التحقق من اكتمال الوضع الحالي
-        const targetCount = FACE_CONFIG.REGISTRATION.POSES[currentPose] || 10;
+        const targetCount = FACE_CONFIG.REGISTRATION.POSES[currentPose] || 0;
         const currentCount = faceEngine.getRegistrationStats().byPose[currentPose] || 0;
 
         if (currentCount >= targetCount) {
@@ -368,8 +390,10 @@ async function performBlinkChallenge() {
             document.getElementById('blinkStatus').textContent = '✗ لم يتم اكتشاف الرمش';
             setTimeout(() => {
                 document.getElementById('livenessChallenge').classList.remove('active');
-                // السماح بالحفظ حتى بدون الرمش
-                showSaveButton();
+                // لا تسمح بالحفظ إذا فشل تحدي الرمش
+                blinkChallengePassed = false;
+                updateMessage('فشل تحدي الرمش - لا يمكن الحفظ. حاول مرة أخرى.', 'error');
+                // لا تعرض زر الحفظ
             }, 1000);
         } else {
             document.getElementById('blinkStatus').textContent = `في انتظار الرمش... (${attempts}/${maxAttempts})`;
@@ -378,6 +402,12 @@ async function performBlinkChallenge() {
 }
 
 function showSaveButton() {
+    // Only show save button if blink challenge passed (when enabled)
+    if (FACE_CONFIG.LIVENESS.ENABLED && FACE_CONFIG.LIVENESS.BLINK_CHALLENGE && !blinkChallengePassed) {
+        updateMessage('يجب اجتياز تحدي الرمش قبل الحفظ', 'error');
+        return;
+    }
+    
     document.getElementById('saveBtn').style.display = 'inline-block';
     const stats = faceEngine.getRegistrationStats();
     updateMessage(`اكتمل التسجيل: ${stats.total} عينة - اضغط حفظ`, 'success');
@@ -429,22 +459,9 @@ function saveFaceData() {
                     byPose: stats.byPose
                 });
 
-                // تحديث البيانات في localStorage أيضاً للتوافق
-                try {
-                    if (targetPerson.type === 'student') {
-                        db.updateStudent(targetPerson.id, { faceData: newFaceData });
-                    } else if (targetPerson.type === 'teacher') {
-                        db.updateTeacher(targetPerson.id, { faceData: newFaceData });
-                    } else if (targetPerson.type === 'administrative') {
-                        db.updateAdministrativeStaff(targetPerson.id, { faceData: newFaceData });
-                    } else if (targetPerson.type === 'security') {
-                        db.updateSecurityStaff(targetPerson.id, { faceData: newFaceData });
-                    } else if (targetPerson.type === 'service') {
-                        db.updateServiceStaff(targetPerson.id, { faceData: newFaceData });
-                    }
-                } catch (error) {
-                    console.warn('⚠️ Failed to update localStorage (but MySQL save succeeded):', error);
-                }
+                // القوالب البيومترية تُحفظ عند الخادم فقط — لا نسخ محلية
+                // (معرّفات localStorage القديمة لا تطابق معرّفات Django،
+                // ومزامنتها تنشر هويات خاطئة).
 
                 // التوجيه للصفحة المناسبة
                 setTimeout(() => {
@@ -542,8 +559,9 @@ function portalOperatorRedirect() {
         return null;
     }
     if (!operator) return null;
-    if (operator.type === 'registration') return 'face-registration-new.html';
-    if (operator.type === 'admin') return 'admin-dashboard.html';
+    const operatorType = operator.user_type || operator.type;
+    if (operatorType === 'registration') return 'face-registration-new.html';
+    if (operatorType === 'admin' || operatorType === 'super_admin' || operator.is_superuser) return 'admin-dashboard.html';
     return null;
 }
 

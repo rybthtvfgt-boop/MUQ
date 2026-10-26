@@ -13,6 +13,26 @@ class FaceSampleSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'captured_at']
         extra_kwargs = {'embedding': {'write_only': True}}
 
+    def validate_quality_score(self, value):
+        """Validate quality score is between 0 and 1"""
+        if not isinstance(value, (int, float)):
+            raise serializers.ValidationError('Quality score must be a number.')
+        if value < 0 or value > 1:
+            raise serializers.ValidationError('Quality score must be between 0 and 1.')
+        return value
+
+    def validate_embedding(self, value):
+        """Validate embedding structure and dimensions"""
+        if not isinstance(value, list):
+            raise serializers.ValidationError('Embedding must be a list.')
+        if len(value) != 128:
+            raise serializers.ValidationError('Embedding must have exactly 128 dimensions.')
+        # Validate all values are numbers
+        for val in value:
+            if not isinstance(val, (int, float)):
+                raise serializers.ValidationError('All embedding values must be numbers.')
+        return value
+
 
 class FaceProfileSerializer(serializers.ModelSerializer):
     person_name = serializers.CharField(source='person.name', read_only=True)
@@ -36,6 +56,22 @@ class FaceProfileSerializer(serializers.ModelSerializer):
         FaceSample.objects.bulk_create(
             FaceSample(profile=profile, **sample) for sample in samples)
         return profile
+
+    def update(self, instance, validated_data):
+        """Handle face profile updates - samples are handled separately via dedicated endpoints"""
+        samples = validated_data.pop('samples', None)
+        
+        # If samples are provided in update, reject it to prevent bulk operations
+        # Samples should be managed through dedicated FaceSample endpoints
+        if samples is not None:
+            raise serializers.ValidationError(
+                {'samples': 'Cannot update samples directly. Use dedicated sample management endpoints.'})
+        
+        # Update other fields normally
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
 
 
 class UserSerializer(serializers.ModelSerializer):

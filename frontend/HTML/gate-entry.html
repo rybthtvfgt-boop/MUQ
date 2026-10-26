@@ -290,9 +290,21 @@
                 </div>
             </div>
 
+            <div class="form-group" style="margin-top: 15px;">
+                <label for="scheduleSelect" style="color: #cbd5e1; display:block; margin-bottom:6px;">الجلسة الدراسية</label>
+                <select id="scheduleSelect" style="width:100%; padding:10px; border-radius:8px; border:1px solid #334155; background:#0f172a; color:#e2e8f0;">
+                    <option value="">— اختر الجلسة —</option>
+                </select>
+                <p id="serverStatus" style="font-size:12px; color:#94a3b8; margin-top:6px;">حالة الاتصال: غير محدد</p>
+                <p id="daySummary" style="font-size:12px; color:#94a3b8; margin-top:4px;">ملخص اليوم: بانتظار البيانات</p>
+            </div>
+
             <button class="btn btn-primary" onclick="startRecognition()" style="margin-top: 20px; width: 100%;">
                 بدء التعرف
             </button>
+            <p style="font-size:12px; color:#94a3b8; margin-top:10px;">
+                عند تعذّر التعرّف بالوجه، التسجيل اليدوي المصرّح يتم من لوحة المدرس أو المشرف فقط.
+            </p>
         </div>
 
         <div class="log-section">
@@ -313,60 +325,194 @@
             <button class="btn btn-secondary" onclick="clearLog()" style="margin-top: 10px; width: 100%;">
                 مسح السجل
             </button>
+
+            <h2 style="margin-top:18px;">سجل المحاولات عند الخادم (اليوم)</h2>
+            <p style="font-size:11px; color:#94a3b8; margin:4px 0 8px;">
+                بيانات و صفية فقط — لا صور ولا قوالب بيومترية. لا يُمسح بإعادة التحميل.
+            </p>
+            <div class="log-container">
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>الوقت</th>
+                            <th>النتيجة</th>
+                            <th>المسافة</th>
+                        </tr>
+                    </thead>
+                    <tbody id="serverLogBody">
+                        <tr><td colspan="3">بانتظار البيانات…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <button class="btn btn-secondary" onclick="refreshServerLog()" style="margin-top: 10px; width: 100%;">
+                تحديث سجل الخادم
+            </button>
         </div>
     </div>
 
     <script src="../Js/face-config.js"></script>
+    <script src="../vendor/face-api/face-api.min.js"></script>
     <script src="../Js/face-recognition-engine.js"></script>
     <script src="../Js/face-storage.js"></script>
-    <script src="../Js/database.js"></script>
     <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const statusDisplay = document.getElementById('statusDisplay');
         const personInfo = document.getElementById('personInfo');
         const scanLine = document.getElementById('scanLine');
+        const serverStatus = document.getElementById('serverStatus');
 
         let isRecognizing = false;
+        let inFlight = false;          // لا تشغيل عمليتي تعرّف متعارضتين
+        let lastOperationId = null;     // منع تكرار نتيجة الإطار نفسه
         let recognitionInterval = null;
+        let cameraStream = null;
         let entryLog = [];
 
-        // تحميل النماذج وبدء الكاميرا
+        function setStatus(text, kind) {
+            statusDisplay.textContent = text;
+            statusDisplay.className = `status-display status-${kind}`;
+        }
+
+        // تحميل النماذج وبدء الكاميرا وجلسات اليوم
         async function init() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                setStatus('الكاميرا غير متاحة — استخدم HTTPS أو localhost', 'denied');
+                return;
+            }
             try {
-                // تحميل النماذج
-                await faceEngine.loadModels();
+                const ok = await faceEngine.loadModels();
+                if (!ok) {
+                    setStatus('تعذّر تحميل نماذج التعرّف', 'denied');
+                    return;
+                }
                 console.log('✅ تم تحميل النماذج');
 
-                // بدء الكاميرا
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                video.srcObject = stream;
-                console.log('✅ تم تشغيل الكاميرا');
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: { ideal: FACE_CONFIG.FRAME.WIDTH },
+                        height: { ideal: FACE_CONFIG.FRAME.HEIGHT }
+                    }
+                });
+                video.srcObject = cameraStream;
+                setStatus('الكاميرا جاهزة — اختر الجلسة ثم ابدأ التعرف', 'waiting');
             } catch (error) {
                 console.error('❌ خطأ في التهيئة:', error);
-                statusDisplay.textContent = 'خطأ في تشغيل الكاميرا';
-                statusDisplay.className = 'status-display status-denied';
+                if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                    setStatus('تم رفض إذن الكاميرا — فعّله من إعدادات المتصفح', 'denied');
+                } else {
+                    setStatus('خطأ في تشغيل الكاميرا', 'denied');
+                }
+            }
+            await loadTodaySchedules();
+            await refreshDaySummary();
+            await refreshServerLog();
+        }
+
+        // الجلسات حسب وقت الخادم (لا حسب ساعة جهاز البوابة)
+        let todaySessions = [];
+
+        async function loadTodaySchedules() {
+            const select = document.getElementById('scheduleSelect');
+            try {
+                const response = await fetch(`${FACE_CONFIG.STORAGE.API_URL}/api/schedule/today`, {
+                    headers: faceStorage.authHeaders()
+                });
+                if (!response.ok) throw new Error(String(response.status));
+                const data = await response.json();
+                todaySessions = data.results || [];
+                const stateLabel = (s) => s.already_recorded ? 'مُسجلة'
+                    : s.phase === 'open' ? 'مفتوحة'
+                    : s.phase === 'before_open' ? 'لم تبدأ' : 'انتهت';
+                select.innerHTML = '<option value="">— اختر الجلسة —</option>' +
+                    todaySessions.map(s =>
+                        `<option value="${s.id}">${s.subject} — ${s.time} (${s.open_from}→${s.open_until}) — ${stateLabel(s)}</option>`
+                    ).join('');
+                serverStatus.textContent =
+                    `حالة الاتصال: الخادم متصل — ${data.day} ${data.server_time} (${todaySessions.length} جلسة)`;
+            } catch (error) {
+                serverStatus.textContent = 'حالة الاتصال: تعذّر الوصول للخادم — شغّل الباكند ثم أعد التحميل';
             }
         }
 
-        // بدء التعرف
+        async function refreshDaySummary() {
+            const box = document.getElementById('daySummary');
+            if (!box) return;
+            try {
+                const response = await fetch(`${FACE_CONFIG.STORAGE.API_URL}/api/attendance/face-summary`, {
+                    headers: faceStorage.authHeaders()
+                });
+                if (!response.ok) { box.textContent = 'ملخص اليوم: غير متاح لهذه الحساب'; return; }
+                const d = await response.json();
+                box.textContent =
+                    `ملخص اليوم ${d.date}: حاضرون ${d.present} · متأخرون ${d.late} · `
+                    + `بالوجه ${d.face_records} · يدوي ${d.manual_records} · `
+                    + `وجوه غير معروفة ${d.unknown_faces} · عينات غير صالحة ${d.invalid_samples}`;
+            } catch (error) {
+                box.textContent = 'ملخص اليوم: تعذّر جلب البيانات — لا يعني ذلك غياباً';
+            }
+        }
+
+        async function refreshServerLog() {
+            const tbody = document.getElementById('serverLogBody');
+            try {
+                const response = await fetch(
+                    `${FACE_CONFIG.STORAGE.API_URL}/api/attendance/face-attempts?today=1&limit=30`,
+                    { headers: faceStorage.authHeaders() });
+                if (!response.ok) {
+                    tbody.innerHTML = '<tr><td colspan="3">سجل الخادم غير متاح لهذا الحساب</td></tr>';
+                    return;
+                }
+                const data = await response.json();
+                if (!data.results.length) {
+                    tbody.innerHTML = '<tr><td colspan="3">لا محاولات اليوم</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = data.results.map(a => {
+                    const tr = document.createElement('tr');
+                    tr.className = a.result === 'matched' ? 'granted' : 'denied';
+                    const time = document.createElement('td');
+                    time.textContent = a.created_at.slice(11, 16);
+                    const result = document.createElement('td');
+                    result.textContent = a.result_display + (a.reason ? ' — ' + a.reason : '');
+                    const dist = document.createElement('td');
+                    dist.textContent = a.best_distance == null ? '—' : a.best_distance.toFixed(3);
+                    tr.append(time, result, dist);
+                    return tr.outerHTML;
+                }).join('');
+            } catch (error) {
+                tbody.innerHTML = '<tr><td colspan="3">تعذّر جلب سجل المحاولات — لا يعني ذلك غياباً</td></tr>';
+            }
+        }
+
         function startRecognition() {
             if (isRecognizing) {
                 stopRecognition();
                 return;
             }
-
+            if (!document.getElementById('scheduleSelect').value) {
+                setStatus('اختر الجلسة الدراسية أولاً', 'denied');
+                return;
+            }
+            const chosen = todaySessions.find(s => String(s.id) === document.getElementById('scheduleSelect').value);
+            if (chosen && chosen.phase === 'closed') {
+                setStatus(`انتهت نافذة هذه الجلسة (${chosen.open_until}) — اختر جلسة أخرى`, 'denied');
+                return;
+            }
+            if (chosen && chosen.phase === 'before_open') {
+                setStatus(`لم تبدأ نافذة التسجيل (${chosen.open_from}) — سيرفض الخادم التسجيل خارجها`, 'waiting');
+            }
+            if (!faceEngine.modelsLoaded) {
+                setStatus('النماذج لم تُحمّل بعد', 'denied');
+                return;
+            }
             isRecognizing = true;
+            lastOperationId = null;
             scanLine.style.display = 'block';
-            statusDisplay.textContent = 'جاري التعرف...';
-            statusDisplay.className = 'status-display status-waiting';
-            personInfo.style.display = 'none';
-
-            // التعرف كل 2 ثانية
+            setStatus('جارٍ الفحص...', 'waiting');
             recognitionInterval = setInterval(recognizeFace, 2000);
         }
 
-        // إيقاف التعرف
         function stopRecognition() {
             isRecognizing = false;
             scanLine.style.display = 'none';
@@ -376,80 +522,113 @@
             }
         }
 
-        // التعرف على الوجه
+        // التعرف على الوجه — القرار كله عند الخادم
         async function recognizeFace() {
+            if (inFlight || !isRecognizing) return;
+            inFlight = true;
             try {
-                // التقاط الصورة
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
+                canvas.width = video.videoWidth || FACE_CONFIG.FRAME.WIDTH;
+                canvas.height = video.videoHeight || FACE_CONFIG.FRAME.HEIGHT;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(video, 0, 0);
 
-                // استخراج الوجه
                 const detection = await faceEngine.detectFace(canvas);
-
                 if (!detection) {
-                    statusDisplay.textContent = 'لم يتم اكتشاف وجه';
+                    if (isRecognizing) setStatus('لم يتم اكتشاف وجه — انظر إلى الكاميرا مباشرة', 'waiting');
+                    return;
+                }
+                const faceSize = detection.detection.box.width;
+                if (faceSize < FACE_CONFIG.QUALITY.MIN_FACE_SIZE) {
+                    setStatus('اقترب من الكاميرا — الوجه صغير', 'waiting');
+                    return;
+                }
+                if (faceSize > FACE_CONFIG.QUALITY.MAX_FACE_SIZE) {
+                    setStatus('ابتعد قليلاً — قريب جداً من الكاميرا', 'waiting');
                     return;
                 }
 
-                // استخراج embedding
-                const embedding = await faceEngine.extractEmbedding(canvas, detection);
+                const embedding = Array.from(detection.descriptor);
+                const scheduleId = document.getElementById('scheduleSelect').value;
+                const result = await checkInOnServer(embedding, scheduleId);
 
-                if (!embedding) {
-                    statusDisplay.textContent = 'فشل في استخراج بيانات الوجه';
-                    return;
-                }
+                if (result.operation_id && result.operation_id === lastOperationId) return;
 
-                // البحث في جميع الأشخاص المسجلين
-                const result = await faceStorage.recognizePerson(embedding);
+                if (result.matched && result.saved) {
+                    lastOperationId = result.operation_id;
+                    const created = result.created;
+                    setStatus(created ? '✅ تم التعرف وتسجيل الحضور' : '✅ تم التعرف — الحضور مسجل مسبقاً', 'granted');
 
-                if (result.matched) {
-                    // الشخص مسموح له بالدخول
-                    statusDisplay.textContent = '✅ مسموح بالدخول';
-                    statusDisplay.className = 'status-display status-granted';
-
-                    // عرض معلومات الشخص
                     personInfo.style.display = 'block';
                     document.getElementById('personName').textContent = result.person.name;
-                    document.getElementById('personType').textContent = getPersonTypeLabel(result.person.type);
-                    document.getElementById('personDepartment').textContent = result.person.department || '-';
+                    document.getElementById('personType').textContent = getPersonTypeLabel(result.person.user_type);
+                    document.getElementById('personDepartment').textContent = result.person.code || '-';
                     document.getElementById('entryTime').textContent = new Date().toLocaleTimeString('ar-EG');
 
-                    // إضافة إلى سجل الدخول
-                    addToLog(result.person.name, 'مسموح', true);
+                    addToLog(result.person.name,
+                        (result.attendance && result.attendance.status) || (created ? 'حاضر' : 'مسجل مسبقاً'), true);
+                    serverStatus.textContent = 'حالة الاتصال: الخادم متصل — آخر عملية ' + result.operation_id.slice(0, 8);
+                    refreshDaySummary();
+                    refreshServerLog();
+                    loadTodaySchedules();
 
-                    // تسجيل الحضور
-                    await recordAttendance(result.person);
-
-                    // إيقاف التعرف بعد النجاح
                     stopRecognition();
-
-                    // إعادة التشغيل بعد 5 ثواني
                     setTimeout(() => {
-                        statusDisplay.textContent = 'في انتظار التعرف...';
-                        statusDisplay.className = 'status-display status-waiting';
-                        personInfo.style.display = 'none';
-                        startRecognition();
+                        if (!isRecognizing) {
+                            setStatus('في انتظار التعرف...', 'waiting');
+                            startRecognition();
+                        }
                     }, 5000);
+                } else if (result.matched && !result.saved) {
+                    setStatus('تعذّر حفظ الحضور: ' + (result.reason || 'تحقق من الجلسة'), 'denied');
+                    serverStatus.textContent = 'حالة الاتصال: الخادم رفض العملية';
+                } else if (result.denied) {
+                    setStatus('غير مخوّل — سجّل الدخول من حساب البوابة', 'denied');
+                    serverStatus.textContent = 'حالة الاتصال: جلسة منتهية أو صلاحيات غير كافية';
+                    stopRecognition();
+                } else if (result.networkError) {
+                    setStatus('تعذّر التحقق — انقطاع الاتصال بالخادم', 'denied');
+                    serverStatus.textContent = 'حالة الاتصال: انقطاع — لن يُعتبر ذلك غياباً';
+                } else if (result.reason && result.reason !== 'وجه غير معروف') {
+                    setStatus('تعذّر التسجيل: ' + result.reason, 'denied');
+                    addToLog('—', result.reason, false);
                 } else {
-                    // الشخص غير مسجل
-                    statusDisplay.textContent = '❌ غير مسموح بالدخول';
-                    statusDisplay.className = 'status-display status-denied';
-                    personInfo.style.display = 'none';
-
-                    // إضافة إلى سجل الدخول
-                    addToLog('غير معروف', 'غير مسموح', false);
-
-                    // إعادة المحاولة بعد 3 ثواني
+                    setStatus('وجه غير معروف — لا يوجد سجل حضور', 'denied');
+                    addToLog('غير معروف', 'وجه غير معروف', false);
+                    refreshServerLog();
                     setTimeout(() => {
-                        statusDisplay.textContent = 'جاري التعرف...';
-                        statusDisplay.className = 'status-display status-waiting';
+                        if (isRecognizing) setStatus('جارٍ الفحص...', 'waiting');
                     }, 3000);
                 }
             } catch (error) {
                 console.error('خطأ في التعرف:', error);
-                statusDisplay.textContent = 'خطأ في التعرف';
+                setStatus('تعذّر التحقق — خطأ تقني', 'denied');
+            } finally {
+                inFlight = false;
+            }
+        }
+
+        // تسجيل الحضور يتم عند الخادم فقط: مطابقة + جلسة + منع تكرار داخل معاملة
+        async function checkInOnServer(embedding, scheduleId) {
+            try {
+                const response = await fetch(`${FACE_CONFIG.STORAGE.API_URL}/api/attendance/face-checkin`, {
+                    method: 'POST',
+                    headers: faceStorage.authHeaders(),
+                    body: JSON.stringify({
+                        embedding: embedding,
+                        schedule: parseInt(scheduleId, 10),
+                        location: 'البوابة الرئيسية'
+                    })
+                });
+                const result = await response.json().catch(() => ({}));
+                if (response.status === 401 || response.status === 403) {
+                    return { matched: false, denied: true };
+                }
+                if (!response.ok && result.matched === undefined) {
+                    return { matched: false, saved: false, reason: result.reason || result.error || 'رفض الخادم' };
+                }
+                return result;
+            } catch (error) {
+                return { matched: false, networkError: true };
             }
         }
 
@@ -460,44 +639,14 @@
                 'teacher': 'مدرس',
                 'administrative': 'موظف إداري',
                 'security': 'موظف أمني',
-                'service': 'موظف خدمة'
+                'service': 'موظف خدمة',
+                'gate': 'بوابة',
+                'registration': 'قسم التسجيل'
             };
             return labels[type] || type;
         }
 
-        // تسجيل الحضور
-        async function recordAttendance(person) {
-            try {
-                const db = new Database();
-                const attendance = db.getAttendance();
-                const today = new Date().toISOString().split('T')[0];
-
-                // التحقق من عدم تسجيل الحضور مسبقاً اليوم
-                const existing = attendance.find(a =>
-                    a.personId === person.id &&
-                    a.personType === person.type &&
-                    a.date === today
-                );
-
-                if (!existing) {
-                    attendance.push({
-                        id: Date.now(),
-                        personId: person.id,
-                        personType: person.type,
-                        date: today,
-                        time: new Date().toLocaleTimeString('ar-EG'),
-                        status: 'present',
-                        location: 'البوابة الرئيسية'
-                    });
-                    db.saveAttendance(attendance);
-                    console.log('✅ تم تسجيل الحضور');
-                }
-            } catch (error) {
-                console.error('خطأ في تسجيل الحضور:', error);
-            }
-        }
-
-        // إضافة إلى سجل الدخول
+        // إضافة إلى سجل الدخول (عرض محلي فقط — السجل الرسمي في قاعدة البيانات)
         function addToLog(name, status, granted) {
             const entry = {
                 time: new Date().toLocaleTimeString('ar-EG'),
@@ -506,9 +655,8 @@
                 granted: granted
             };
 
-            entryLog.unshift(entry); // إضافة في البداية
+            entryLog.unshift(entry);
 
-            // الاحتفاظ بآخر 50 سجل فقط
             if (entryLog.length > 50) {
                 entryLog = entryLog.slice(0, 50);
             }
@@ -516,7 +664,6 @@
             updateLogTable();
         }
 
-        // تحديث جدول السجل
         function updateLogTable() {
             const tbody = document.getElementById('logTableBody');
             tbody.innerHTML = '';
@@ -545,6 +692,15 @@
             entryLog = [];
             updateLogTable();
         }
+
+        // إيقاف الكاميرا عند مغادرة الصفحة
+        function stopCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+        }
+        window.addEventListener('pagehide', function () { stopRecognition(); stopCamera(); });
 
         // التهيئة عند التحميل
         init();

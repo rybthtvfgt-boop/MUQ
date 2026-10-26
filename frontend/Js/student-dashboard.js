@@ -1,15 +1,22 @@
+// Security helper: escape HTML to prevent XSS
+function escapeHtml(text) {
+    if (text === null || text === undefined) return '';
+    const div = document.createElement('div');
+    div.textContent = String(text);
+    return div.innerHTML;
+}
+
 // Student Dashboard System
 let currentUser = null;
 
 // Check authentication
-function checkAuth() {
-    const userStr = localStorage.getItem('currentUser');
-    if (!userStr) {
+async function checkAuth() {
+    const user = await api.getCurrentUser();
+    if (!user) {
         window.location.href = 'login.html';
         return null;
     }
-    const user = JSON.parse(userStr);
-    if (user.type !== 'student') {
+    if ((user.user_type || user.type) !== 'student') {
         window.location.href = 'login.html';
         return null;
     }
@@ -17,8 +24,8 @@ function checkAuth() {
 }
 
 // Initialize
-document.addEventListener('DOMContentLoaded', function() {
-    currentUser = checkAuth();
+document.addEventListener('DOMContentLoaded', async function() {
+    currentUser = await checkAuth();
     if (currentUser) {
         loadStudentInfo();
         loadOverview();
@@ -41,8 +48,8 @@ function registerFace() {
     }
 }
 
-function logout() {
-    localStorage.removeItem('currentUser');
+async function logout() {
+    await api.logout();
     window.location.href = 'login.html';
 }
 
@@ -188,10 +195,10 @@ function loadAttendance() {
 
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${record.date}</td>
-            <td>${scheduleItem ? scheduleItem.subject : 'غير محدد'}</td>
-            <td>${teacher ? teacher.name : 'غير محدد'}</td>
-            <td>${scheduleItem ? scheduleItem.time : 'غير محدد'}</td>
+            <td>${escapeHtml(record.date)}</td>
+            <td>${escapeHtml(scheduleItem ? scheduleItem.subject : 'غير محدد')}</td>
+            <td>${escapeHtml(teacher ? teacher.name : 'غير محدد')}</td>
+            <td>${escapeHtml(scheduleItem ? scheduleItem.time : 'غير محدد')}</td>
             <td><span class="status ${record.status}">${getStatusText(record.status)}</span></td>
         `;
         tbody.appendChild(row);

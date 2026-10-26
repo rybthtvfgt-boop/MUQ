@@ -54,10 +54,10 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
 
         const user = result.user;
 
-        // Verify user type matches selection
-        if (user.user_type !== userType && userType !== 'admin') {
+        // Verify user type matches selection (skip for admin)
+        if (userType !== 'admin' && user.user_type !== userType) {
             await api.logout();
-            showError('نوع المستخدم غير مطابق');
+            showError('نوع المستخدم غير مطابق. هذا الحساب هو: ' + user.user_type);
             return;
         }
 
@@ -67,7 +67,14 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
             return;
         }
 
-        window.location.href = requestedPortalKey ? PORTALS[requestedPortalKey].page : HOME_BY_TYPE[userType];
+        // Redirect based on actual user type from server, not form selection
+        const targetPage = requestedPortalKey ? PORTALS[requestedPortalKey].page : HOME_BY_TYPE[user.user_type];
+        if (targetPage) {
+            window.location.href = targetPage;
+        } else {
+            showError('نوع المستخدم غير معروف: ' + user.user_type);
+            await api.logout();
+        }
     } catch (error) {
         console.error('Login error:', error);
         showError('حدث خطأ أثناء تسجيل الدخول. تأكد من تشغيل السيرفر.');
@@ -105,6 +112,9 @@ window.addEventListener('load', async function() {
         const user = await api.getCurrentUser();
         if (user && HOME_BY_TYPE[user.user_type]) {
             window.location.href = HOME_BY_TYPE[user.user_type];
+        } else if (user) {
+            await api.logout();
+            showError('نوع المستخدم غير معروف: ' + user.user_type);
         }
     } catch (error) {
         await api.logout();

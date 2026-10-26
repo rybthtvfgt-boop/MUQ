@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'users',
     'departments',
     'attendance',
+    'monitoring',
 ]
 
 AUTH_USER_MODEL = 'users.User'
@@ -73,7 +74,7 @@ ROOT_URLCONF = 'muq_system.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -91,6 +92,19 @@ WSGI_APPLICATION = 'muq_system.wsgi.application'
 # DB_ENGINE=sqlite for local development, DB_ENGINE=postgresql for deployment.
 DB_ENGINE = os.environ.get('DB_ENGINE', 'sqlite').strip().lower()
 
+def parse_database_url(url):
+    """Parse DATABASE_URL into Django database configuration"""
+    import urllib.parse
+    parsed = urllib.parse.urlparse(url)
+    return {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': parsed.path[1:] if parsed.path else 'muq_system',
+        'USER': parsed.username or 'postgres',
+        'PASSWORD': parsed.password or '',
+        'HOST': parsed.hostname or 'localhost',
+        'PORT': parsed.port or 5432,
+    }
+
 if DB_ENGINE == 'sqlite':
     DATABASES = {
         'default': {
@@ -99,17 +113,25 @@ if DB_ENGINE == 'sqlite':
         }
     }
 elif DB_ENGINE == 'postgresql':
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('DB_NAME', 'muq_system'),
-            'USER': os.environ.get('DB_USER', 'postgres'),
-            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
-            'HOST': os.environ.get('DB_HOST', 'localhost'),
-            'PORT': os.environ.get('DB_PORT', '5432'),
-            'CONN_MAX_AGE': int(os.environ.get('DB_CONN_MAX_AGE', '60')),
+    # Check for DATABASE_URL first (Railway and other platforms)
+    database_url = os.environ.get('DATABASE_URL')
+    if database_url:
+        DATABASES = {
+            'default': parse_database_url(database_url)
         }
-    }
+    else:
+        # Fall back to individual environment variables
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': os.environ.get('DB_NAME', 'muq_system'),
+                'USER': os.environ.get('DB_USER', 'postgres'),
+                'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+                'HOST': os.environ.get('DB_HOST', 'localhost'),
+                'PORT': os.environ.get('DB_PORT', '5432'),
+                'CONN_MAX_AGE': int(os.environ.get('DB_CONN_MAX_AGE', '60')),
+            }
+        }
 else:
     raise RuntimeError(f'Unsupported DB_ENGINE: {DB_ENGINE!r} (expected sqlite or postgresql)')
 
@@ -128,6 +150,15 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': int(os.environ.get('API_PAGE_SIZE', '100')),
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/day',
+        'user': '1000/day',
+        'login': '5/minute',  # Specific rate for login attempts
+    }
 }
 
 SIMPLE_JWT = {
@@ -155,6 +186,22 @@ CORS_ALLOWED_ORIGIN_REGEXES = env_list('CORS_ALLOWED_ORIGIN_REGEXES')
 # Broad origins are permitted only in debug mode; deployments must list them.
 CORS_ALLOW_ALL_ORIGINS = DEBUG and env_bool('CORS_ALLOW_ALL_ORIGINS', False)
 CORS_ALLOW_CREDENTIALS = env_bool('CORS_ALLOW_CREDENTIALS', False)
+
+# Add localhost origins for development
+if DEBUG:
+    CORS_ALLOWED_ORIGINS.extend(['http://127.0.0.1:58272', 'http://localhost:58272'])
+
+# --- CSRF --------------------------------------------------------------------
+# Allow browser preview and localhost in development
+CSRF_TRUSTED_ORIGINS = env_list('CSRF_TRUSTED_ORIGINS')
+if DEBUG:
+    CSRF_TRUSTED_ORIGINS.extend(['http://127.0.0.1:53766', 'http://localhost:53766'])
+    CSRF_TRUSTED_ORIGINS.extend(['http://127.0.0.1:58272', 'http://localhost:58272'])
+    CSRF_COOKIE_SECURE = False
+    SESSION_COOKIE_SECURE = False
+else:
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = True
 
 # --- Static / media -----------------------------------------------------------
 STATIC_URL = 'static/'

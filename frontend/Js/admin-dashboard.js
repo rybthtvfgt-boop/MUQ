@@ -1,23 +1,37 @@
+// Security helper: escape HTML to prevent XSS
+function escapeHtml(text) {
+    if (text === null || text === undefined) return '';
+    const div = document.createElement('div');
+    div.textContent = String(text);
+    return div.innerHTML;
+}
+
 // Check authentication
-function checkAuth() {
-    const currentUser = localStorage.getItem('currentUser');
-    if (!currentUser) {
+async function checkAuth() {
+    const user = await api.getCurrentUser();
+    if (!user) {
         window.location.href = 'login.html';
         return null;
     }
-    const user = JSON.parse(currentUser);
-    if (user.type !== 'admin') {
+    const userType = user.user_type || user.type;
+    if (userType !== 'admin' && userType !== 'super_admin' && !user.is_superuser) {
         window.location.href = 'login.html';
         return null;
     }
     return user;
 }
 
-const currentUser = checkAuth();
+let currentUser = null;
+checkAuth().then(user => {
+    currentUser = user;
+    if (currentUser) {
+        loadOverview();
+    }
+});
 
 // Logout function
-function logout() {
-    localStorage.removeItem('currentUser');
+async function logout() {
+    await api.logout();
     window.location.href = 'login.html';
 }
 
@@ -92,11 +106,11 @@ function loadStudents() {
     students.forEach(student => {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${student.name}</td>
-            <td>${student.idNumber}</td>
-            <td>${db.getDepartmentNameById(student.departmentId) || '-'}</td>
-            <td>${db.getStageNameById(student.stageId) || '-'}</td>
-            <td>${student.branch || '-'}</td>
+            <td>${escapeHtml(student.name)}</td>
+            <td>${escapeHtml(student.idNumber)}</td>
+            <td>${escapeHtml(db.getDepartmentNameById(student.departmentId) || '-')}</td>
+            <td>${escapeHtml(db.getStageNameById(student.stageId) || '-')}</td>
+            <td>${escapeHtml(student.branch || '-')}</td>
             <td>${student.faceData && student.faceData.images && student.faceData.images.length > 0 ? 'مسجل' : 'غير مسجل'}</td>
             <td>
                 <button class="btn btn-edit" onclick="editStudent(${student.id})">تعديل</button>

@@ -1,3 +1,11 @@
+// Security helper: escape HTML to prevent XSS
+function escapeHtml(text) {
+    if (text === null || text === undefined) return '';
+    const div = document.createElement('div');
+    div.textContent = String(text);
+    return div.innerHTML;
+}
+
 // Teacher Dashboard System
 let currentUser = null;
 let currentLecture = null;
@@ -9,14 +17,13 @@ let teacherAttendanceRecorded = false;
 let currentLectureStudents = [];
 
 // Check authentication
-function checkAuth() {
-    const userStr = localStorage.getItem('currentUser');
-    if (!userStr) {
+async function checkAuth() {
+    const user = await api.getCurrentUser();
+    if (!user) {
         window.location.href = 'login.html';
         return null;
     }
-    const user = JSON.parse(userStr);
-    if (user.type !== 'teacher') {
+    if ((user.user_type || user.type) !== 'teacher') {
         window.location.href = 'login.html';
         return null;
     }
@@ -24,8 +31,8 @@ function checkAuth() {
 }
 
 // Initialize
-document.addEventListener('DOMContentLoaded', function() {
-    currentUser = checkAuth();
+document.addEventListener('DOMContentLoaded', async function() {
+    currentUser = await checkAuth();
     if (currentUser) {
         loadTeacherInfo();
         loadOverview();
@@ -48,8 +55,8 @@ function registerFace() {
     }
 }
 
-function logout() {
-    localStorage.removeItem('currentUser');
+async function logout() {
+    await api.logout();
     window.location.href = 'login.html';
 }
 
@@ -470,11 +477,11 @@ function loadMySchedule() {
     schedule.forEach(item => {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${item.day}</td>
-            <td>${item.time}</td>
-            <td>${item.subject}</td>
-            <td>${db.getDepartmentNameById(item.departmentId) || '-'}</td>
-            <td>${db.getStageNameById(item.stageId) || '-'}</td>
+            <td>${escapeHtml(item.day)}</td>
+            <td>${escapeHtml(item.time)}</td>
+            <td>${escapeHtml(item.subject)}</td>
+            <td>${escapeHtml(db.getDepartmentNameById(item.departmentId) || '-')}</td>
+            <td>${escapeHtml(db.getStageNameById(item.stageId) || '-')}</td>
             <td>${item.branch || '-'}</td>
         `;
         tbody.appendChild(row);

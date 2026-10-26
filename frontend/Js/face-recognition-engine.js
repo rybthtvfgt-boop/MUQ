@@ -251,7 +251,16 @@ class FaceRecognitionEngine {
 
         // التحقق من الزاوية المطلوبة
         const detectedPose = this.detectPose(detection);
-        if (currentPose && detectedPose !== currentPose && detectedPose !== 'unknown') {
+        
+        // Reject unknown poses during registration
+        if (detectedPose === 'unknown') {
+            return {
+                success: false,
+                reason: 'لم يتم تحديد زاوية الرأس - انظر مباشرة للكاميرا'
+            };
+        }
+        
+        if (currentPose && detectedPose !== currentPose) {
             return {
                 success: false,
                 reason: `حرّك رأسك نحو ${this.getPoseInstruction(currentPose)}`

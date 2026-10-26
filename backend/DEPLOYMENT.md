@@ -1,173 +1,227 @@
-# Deployment Guide - Railway
+# دليل النشر - Django Backend
 
-## Prerequisites
-- Railway account (https://railway.app)
-- Git repository with the Django project
-- Railway CLI (optional)
+## 🚀 النشر على Railway
 
-## Step 1: Prepare the Project
+### المتطلبات
+- حساب على [Railway](https://railway.app)
+- حساب على GitHub
+- Railway CLI (اختياري)
 
-1. **Navigate to the backend directory:**
-   ```bash
-   cd backend
-   ```
+### الخطوات
 
-2. **Ensure all dependencies are installed:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Run migrations locally to verify:**
-   ```bash
-   python manage.py migrate
-   ```
-
-4. **Create a superuser (optional, for testing):**
-   ```bash
-   python manage.py create_superuser
-   ```
-
-## Step 2: Push to Git
-
-1. **Initialize git if not already done:**
-   ```bash
-   git init
-   git add .
-   git commit -m "Ready for Railway deployment"
-   ```
-
-2. **Push to GitHub/GitLab/Bitbucket:**
-   ```bash
-   git remote add origin <your-repo-url>
-   git push -u origin main
-   ```
-
-## Step 3: Deploy to Railway
-
-### Option A: Via Railway Web Interface
-
-1. Go to [Railway](https://railway.app) and log in
-2. Click "New Project" → "Deploy from GitHub repo"
-3. Select your repository
-4. Railway will automatically detect the Python project
-5. Click "Deploy"
-
-### Option B: Via Railway CLI
-
-1. **Install Railway CLI:**
-   ```bash
-   npm install -g @railway/cli
-   ```
-
-2. **Login:**
-   ```bash
-   railway login
-   ```
-
-3. **Initialize:**
-   ```bash
-   railway init
-   ```
-
-4. **Add PostgreSQL database:**
-   ```bash
-   railway add postgresql
-   ```
-
-5. **Deploy:**
-   ```bash
-   railway up
-   ```
-
-## Step 4: Configure Environment Variables
-
-In Railway dashboard, go to your project → Settings → Variables and add:
-
-```
-DEBUG=False
-SECRET_KEY=<generate a strong secret key>
-DB_ENGINE=postgresql
-DB_NAME=${{RAILWAY_POSTGRES_DB_NAME}}
-DB_USER=${{RAILWAY_POSTGRES_USER}}
-DB_PASSWORD=${{RAILWAY_POSTGRES_PASSWORD}}
-DB_HOST=${{RAILWAY_POSTGRES_HOST}}
-DB_PORT=${{RAILWAY_POSTGRES_PORT}}
-DB_CONN_MAX_AGE=60
-CORS_ALLOWED_ORIGINS=<your-frontend-domain>
-CORS_ALLOW_ALL_ORIGINS=False
-CORS_ALLOW_CREDENTIALS=True
-JWT_ACCESS_TOKEN_HOURS=2
-JWT_REFRESH_TOKEN_DAYS=7
-ALLOWED_HOSTS=<your-railway-domain>.railway.app
-```
-
-**Note:** Railway automatically provides PostgreSQL connection details as environment variables (RAILWAY_POSTGRES_*).
-
-## Step 5: Run Migrations on Railway
-
-After deployment, you need to run migrations:
-
-1. Go to Railway dashboard → your project
-2. Click on the "Console" tab for your web service
-3. Run:
-   ```bash
-   python manage.py migrate
-   ```
-
-## Step 6: Create Superuser
-
-In the Railway console:
+#### 1. إعداد المشروع
 
 ```bash
-python manage.py create_superuser
+# التأكد من أن جميع الملفات موجودة
+cd backend
+ls -la
 ```
 
-Follow the prompts to create your admin account.
+يجب أن يتضمن:
+- `Procfile`
+- `railway.json`
+- `nixpacks.toml`
+- `requirements.txt`
+- `.env.example`
 
-## Step 7: Verify Deployment
+#### 2. إعداد GitHub
 
-1. Get your Railway URL from the dashboard
-2. Visit `https://<your-app>.railway.app/api/health/`
-3. You should see: `{"status": "healthy"}`
+```bash
+# تهيئة git
+git init
+git add .
+git commit -m "Initial commit"
 
-## Step 8: Update Frontend Configuration
+# إضافة remote
+git remote add origin https://github.com/your-username/muq-backend.git
 
-Update the API URL in your frontend (`Js/api-client.js`):
-
-```javascript
-const API_BASE_URL = 'https://<your-app>.railway.app/api';
+# دفع الكود
+git branch -M main
+git push -u origin main
 ```
 
-## Troubleshooting
+#### 3. إعداد Railway من CLI
 
-### Build Failures
-- Check the build logs in Railway dashboard
-- Ensure `requirements.txt` is in the Django directory
-- Verify Python version compatibility
+```bash
+# تثبيت Railway CLI
+npm install -g @railway/cli
 
-### Database Connection Issues
-- Verify all database environment variables are set
-- Check that PostgreSQL addon is running
-- Ensure DB_ENGINE is set to `postgresql`
+# تسجيل الدخول
+railway login
 
-### CORS Errors
-- Add your frontend domain to `CORS_ALLOWED_ORIGINS`
-- For local development, you can temporarily set `CORS_ALLOW_ALL_ORIGINS=True`
+# إنشاء مشروع جديد
+railway init
 
-### Static Files
-- Static files are served via Whitenoise
-- If needed, run `python manage.py collectstatic` in Railway console
+# إضافة خدمات
+railway add
+# اختر: PostgreSQL Database
+railway add
+# اختر: Python (Django)
 
-## Monitoring
+# إعداد المتغيرات البيئية
+railway variables set DEBUG=False
+railway variables set SECRET_KEY=your-secret-key-here
+railway variables set DB_ENGINE=postgresql
+railway variables set ALLOWED_HOSTS=your-app-url.railway.app
+```
 
-- Check logs in Railway dashboard
-- Monitor PostgreSQL usage in the database tab
-- Set up alerts for errors and performance issues
+#### 4. تشغيل Migrations
 
-## Security Notes
+```bash
+# من Railway CLI
+railway run python manage.py migrate
 
-- Never commit `.env` file
-- Use strong `SECRET_KEY` (generate with: `python manage.py generatesecretkey`)
-- Keep `DEBUG=False` in production
-- Use HTTPS (Railway provides this automatically)
-- Regularly update dependencies
+# إنشاء مستخدم الأدمن
+railway run python create_admin.py
+```
+
+#### 5. النشر
+
+```bash
+# النشر
+railway up
+
+# فتح النظام في المتصفح
+railway open
+```
+
+### المتغيرات البيئية المطلوبة
+
+| المتغير | الوصف | القيمة الافتراضية |
+|---------|-------|-------------------|
+| DEBUG | وضع التطوير | False |
+| SECRET_KEY | مفتاح Django السري | قيمة عشوائية |
+| DB_ENGINE | نوع قاعدة البيانات | postgresql |
+| DB_NAME | اسم قاعدة البيانات | يتم إنشاؤه تلقائياً |
+| DB_USER | مستخدم قاعدة البيانات | يتم إنشاؤه تلقائياً |
+| DB_PASSWORD | كلمة مرور قاعدة البيانات | يتم إنشاؤه تلقائياً |
+| DB_HOST | مضيف قاعدة البيانات | localhost |
+| DB_PORT | منفذ قاعدة البيانات | 5432 |
+| ALLOWED_HOSTS | النطاقات المسموحة | *.railway.app |
+
+## 🚀 النشر على Render
+
+### الخطوات
+
+1. سجل الدخول إلى [Render](https://render.com)
+2. أنشئ حساب جديد
+3. Connect your GitHub repository
+4. أنشئ New Web Service
+5. إعدادات البناء:
+   - Build Command: `pip install -r requirements.txt`
+   - Start Command: `gunicorn muq_system.wsgi:application --bind 0.0.0.0:$PORT --workers 4`
+6. إضافة Environment Variables من قسم البيئة
+7. اضغط Deploy
+
+## 🚀 النشر على Heroku
+
+### المتطلبات
+- حساب على [Heroku](https://heroku.com)
+- Heroku CLI
+
+### الخطوات
+
+```bash
+# تثبيت Heroku CLI
+# من https://devcenter.heroku.com/articles/heroku-cli
+
+# تسجيل الدخول
+heroku login
+
+# إنشاء تطبيق
+heroku create muq-backend
+
+# إضافة PostgreSQL
+heroku addons:create heroku-postgresql:mini
+
+# إعداد المتغيرات البيئية
+heroku config:set DEBUG=False
+heroku config:set SECRET_KEY=your-secret-key
+heroku config:set ALLOWED_HOSTS=*.herokuapp.com
+
+# تشغيل Migrations
+heroku run python manage.py migrate
+
+# إنشاء مستخدم الأدمن
+heroku run python create_admin.py
+
+# النشر
+git push heroku main
+```
+
+## 🔒 الأمان في الإنتاج
+
+### 1. تغيير كلمة المرور الافتراضية
+
+بعد النشر، قم بتغيير كلمة مرور الأدمن فوراً:
+
+```bash
+heroku run python manage.py changepassword admin
+# أو من Railway CLI
+railway run python manage.py changepassword admin
+```
+
+### 2. إعداد HTTPS
+
+Railway و Render و Heroku يوفرون HTTPS تلقائياً.
+
+### 3. CORS Configuration
+
+تأكد من أن `ALLOWED_HOSTS` يتضمن نطاق تطبيقك.
+
+## 📊 المراقبة
+
+### Railway
+
+- Dashboard: https://railway.app
+- Logs: من لوحة التحكم في Railway
+
+### Render
+
+- Dashboard: https://dashboard.render.com
+- Logs: من لوحة التحكم في Render
+
+### Heroku
+
+- Dashboard: https://dashboard.heroku.com
+- Logs: `heroku logs --tail`
+
+## 🔄 CI/CD
+
+### GitHub Actions
+
+تم إعداد `.github/workflows/deploy.yml` للنشر التلقائي على Railway.
+
+ عند كل push إلى الفرع `main`:
+1. تشغيل الاختبارات
+2. تشغيل Migrations
+3. النشر التلقائي
+
+## 🐛 استكشاف الأخطاء
+
+### المشكلة: Migration فشل
+
+```bash
+# إعادة تعيين قاعدة البيانات
+railway run python manage.py migrate --fake-initial
+```
+
+### المشكلة: Static files
+
+```bash
+# جمع static files
+railway run python manage.py collectstatic --noinput
+```
+
+### المشكلة: Database connection
+
+تأكد من أن:
+- قاعدة البيانات تعمل
+- المتغيرات البيئية صحيحة
+- قاعدة البيانات PostgreSQL قيد التشغيل
+
+## 📝 الملاحظات
+
+- Railway يوفر $5/month للخدمات المجانية
+- Render يوفر خدمة مجانية مع قيود
+- Heroku يتطلب بطاقة ائتمانية (خدمة مجانية محدودة)

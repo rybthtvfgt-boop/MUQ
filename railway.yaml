@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: muq-backend
+    env: python
+    buildCommand: cd backend && pip install -r requirements.txt
+    startCommand: cd backend && gunicorn muq_system.wsgi:application --bind 0.0.0.0:$PORT --workers 4
+    envVars:
+      - key: DEBUG
+        value: False
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DB_ENGINE
+        value: postgresql
+      - key: DATABASE_URL
+        fromDatabase:
+          name: muq-database
+          property: connectionString
+      - key: DJANGO_SETTINGS_MODULE
+        value: muq_system.settings
+      - key: ALLOWED_HOSTS
+        value: .railway.app,.vercel.app
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://*.railway.app,https://*.vercel.app
+    plan: free
+
+databases:
+  - name: muq-database
+    databaseName: muq_production
+    user: muq_user
+    plan: free
