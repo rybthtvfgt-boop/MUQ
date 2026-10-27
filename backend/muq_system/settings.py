@@ -36,7 +36,7 @@ if not SECRET_KEY:
         # Temporary fallback for Railway deployment - should be set in env vars
         SECRET_KEY = 'django-insecure-production-temp-fallback'
 
-ALLOWED_HOSTS = env_list('ALLOWED_HOSTS', 'localhost,127.0.0.1' if DEBUG else '')
+ALLOWED_HOSTS = env_list('ALLOWED_HOSTS', 'localhost,127.0.0.1' if DEBUG else '.railway.app,.vercel.app')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
