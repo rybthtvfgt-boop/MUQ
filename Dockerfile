@@ -7,4 +7,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backend/ .
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:$PORT"]
+CMD ["sh", "-c", "gunicorn muq_system.wsgi:application --bind 0.0.0.0:${PORT} --workers 4"]
