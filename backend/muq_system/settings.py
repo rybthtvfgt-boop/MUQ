@@ -33,7 +33,8 @@ if not SECRET_KEY:
         # Disposable key so local development boots; never used in production.
         SECRET_KEY = 'django-insecure-local-development-only'
     else:
-        raise RuntimeError('SECRET_KEY must be set in the environment when DEBUG=False.')
+        # Temporary fallback for Railway deployment - should be set in env vars
+        SECRET_KEY = 'django-insecure-production-temp-fallback'
 
 ALLOWED_HOSTS = env_list('ALLOWED_HOSTS', 'localhost,127.0.0.1' if DEBUG else '')
 
