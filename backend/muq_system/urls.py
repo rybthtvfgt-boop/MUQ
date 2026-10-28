@@ -39,20 +39,20 @@ urlpatterns = [
     path('api/monitoring/', include('monitoring.urls')),
 
     # Frontend static files
-    path('app/', include('django.contrib.staticfiles.urls')),
+    path('static/', include('django.contrib.staticfiles.urls')),
 
-    # Frontend index
-    path('app/', frontend_index, name='frontend'),
+    # Frontend index - root URL
+    path('', frontend_index, name='frontend'),
 
-    # Template views
-    path('', login_template_view, name='login'),
-    path('logout/', logout_template_view, name='logout'),
-    path('admin-dashboard/', admin_dashboard, name='admin_dashboard'),
-    path('teacher-dashboard/', teacher_dashboard, name='teacher_dashboard'),
-    path('student-dashboard/', student_dashboard, name='student_dashboard'),
-    path('staff-dashboard/', staff_dashboard, name='staff_dashboard'),
-    path('gate-dashboard/', gate_dashboard, name='gate_dashboard'),
-    path('registration-dashboard/', registration_dashboard, name='registration_dashboard'),
+    # Template views (moved to /auth/ prefix)
+    path('auth/login/', login_template_view, name='login'),
+    path('auth/logout/', logout_template_view, name='logout'),
+    path('auth/admin-dashboard/', admin_dashboard, name='admin_dashboard'),
+    path('auth/teacher-dashboard/', teacher_dashboard, name='teacher_dashboard'),
+    path('auth/student-dashboard/', student_dashboard, name='student_dashboard'),
+    path('auth/staff-dashboard/', staff_dashboard, name='staff_dashboard'),
+    path('auth/gate-dashboard/', gate_dashboard, name='gate_dashboard'),
+    path('auth/registration-dashboard/', registration_dashboard, name='registration_dashboard'),
 ]
 
 if settings.DEBUG:
