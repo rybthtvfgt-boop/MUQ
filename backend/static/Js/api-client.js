@@ -14,9 +14,58 @@ class APIClient {
     constructor() {
         this.accessToken = localStorage.getItem('accessToken');
         this.refreshToken = localStorage.getItem('refreshToken');
+        this.requestQueue = [];
+        this.isProcessingQueue = false;
+        this.lastRequestTime = 0;
+        this.minRequestInterval = 200; // 200ms between requests (5 requests per second)
     }
 
     async request(endpoint, options = {}) {
+        return new Promise((resolve, reject) => {
+            this.requestQueue.push({ endpoint, options, resolve, reject });
+            this.processQueue();
+        });
+    }
+
+    async processQueue() {
+        if (this.isProcessingQueue || this.requestQueue.length === 0) {
+            return;
+        }
+
+        this.isProcessingQueue = true;
+
+        while (this.requestQueue.length > 0) {
+            const { endpoint, options, resolve, reject } = this.requestQueue.shift();
+
+            // Rate limiting: wait if needed
+            const now = Date.now();
+            const timeSinceLastRequest = now - this.lastRequestTime;
+            if (timeSinceLastRequest < this.minRequestInterval) {
+                await new Promise(r => setTimeout(r, this.minRequestInterval - timeSinceLastRequest));
+            }
+
+            try {
+                const response = await this.executeRequest(endpoint, options);
+                this.lastRequestTime = Date.now();
+
+                // Handle rate limiting (429)
+                if (response.status === 429) {
+                    console.log('Rate limited, waiting 5 seconds...');
+                    await new Promise(r => setTimeout(r, 5000));
+                    const retryResponse = await this.executeRequest(endpoint, options);
+                    resolve(retryResponse);
+                } else {
+                    resolve(response);
+                }
+            } catch (error) {
+                reject(error);
+            }
+        }
+
+        this.isProcessingQueue = false;
+    }
+
+    async executeRequest(endpoint, options) {
         const url = `${API_BASE_URL}${endpoint}`;
         const headers = {
             'Content-Type': 'application/json',
