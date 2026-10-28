@@ -70,6 +70,24 @@ def run_training(session_id, dataset_path, model_save_path):
         session.current_stage = 'Starting training...'
         session.save()
 
+        # Check if dataset has images
+        def count_images(directory):
+            if not os.path.exists(directory):
+                return 0
+            count = 0
+            for root, dirs, files in os.walk(directory):
+                count += len([f for f in files if f.lower().endswith(('.jpg', '.jpeg', '.png'))])
+            return count
+
+        total_images = count_images(dataset_path)
+        if total_images == 0:
+            training_status['error'] = 'Dataset is empty. No training images found.'
+            training_status['current_stage'] = 'Training failed (empty dataset)'
+            session.status = 'failed'
+            session.error_message = 'Dataset is empty. Please upload training images first.'
+            session.save()
+            return
+
         # Create model save directory if it doesn't exist
         os.makedirs(model_save_path, exist_ok=True)
 
