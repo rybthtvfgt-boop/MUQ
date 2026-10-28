@@ -15,7 +15,7 @@ from rest_framework import status
 from .models import TrainingSession, TrainedModel
 
 # Configuration
-DATASET_PATH = os.environ.get('DATASET_PATH', os.path.join(os.path.dirname(__file__), '..', '..', 'dataset'))
+DATASET_PATH = os.environ.get('DATASET_PATH', '/app/dataset')
 TRAINING_SCRIPT = os.path.join(os.path.dirname(__file__), '..', 'train_monitoring_model.py')
 LOG_FILE = os.path.join(DATASET_PATH, 'training_log.json')
 MODEL_SAVE_PATH = os.path.join(DATASET_PATH, 'trained_model')

@@ -19,5 +19,16 @@ if not User.objects.filter(username='muq').exists():
     print("Admin user 'muq' created!")
 EOF
 
+# Create dataset directory structure
+mkdir -p /app/dataset/training_data/smoking
+mkdir -p /app/dataset/training_data/non_smoking
+mkdir -p /app/dataset/validation_data/smoking
+mkdir -p /app/dataset/validation_data/non_smoking
+mkdir -p /app/dataset/testing_data/smoking
+mkdir -p /app/dataset/testing_data/non_smoking
+mkdir -p /app/dataset/trained_models
+
+echo "Dataset directory structure created"
+
 # Execute the CMD
 exec "$@"
