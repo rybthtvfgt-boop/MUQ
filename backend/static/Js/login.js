@@ -1,18 +1,18 @@
 // Login with API Client
 const HOME_BY_TYPE = {
-    admin: 'admin-dashboard.html',
-    teacher: 'teacher-dashboard.html',
-    student: 'student-dashboard.html',
-    administrative: 'staff-dashboard.html',
-    security: 'staff-dashboard.html',
-    service: 'staff-dashboard.html',
-    gate: 'gate-entry.html',
-    registration: 'face-registration-new.html'
+    admin: '/static/HTML/admin-dashboard.html',
+    teacher: '/static/HTML/teacher-dashboard.html',
+    student: '/static/HTML/student-dashboard.html',
+    administrative: '/static/HTML/staff-dashboard.html',
+    security: '/static/HTML/staff-dashboard.html',
+    service: '/static/HTML/staff-dashboard.html',
+    gate: '/static/HTML/gate-entry.html',
+    registration: '/static/HTML/face-registration-new.html'
 };
 
 const PORTALS = {
-    gate: { label: 'بوابة الدخول', page: 'gate-entry.html' },
-    registration: { label: 'بوابة التسجيل', page: 'face-registration-new.html' }
+    gate: { label: 'بوابة الدخول', page: '/static/HTML/gate-entry.html' },
+    registration: { label: 'بوابة التسجيل', page: '/static/HTML/face-registration-new.html' }
 };
 
 function getQueryParam(name) {
