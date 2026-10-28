@@ -1,38 +1,23 @@
-"""
-Create admin user for production deployment.
-Run this script after migrations are applied.
-"""
-
+#!/usr/bin/env python
 import os
-import sys
 import django
 
-# Setup Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'muq_system.settings')
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 django.setup()
 
-from django.contrib.auth import get_user_model
+from users.models import User
 
-User = get_user_model()
-
-def create_admin():
-    """Create admin user if it doesn't exist."""
-    admin_password = os.environ.get('ADMIN_PASSWORD', 'Admin@123!')
-    admin_email = os.environ.get('ADMIN_EMAIL', 'admin@muq.com')
-
-    if not User.objects.filter(username='admin').exists():
-        User.objects.create_superuser(
-            username='admin',
-            email=admin_email,
-            password=admin_password
-        )
-        print("✅ Admin user created successfully")
-        print(f"   Username: admin")
-        print(f"   Email: {admin_email}")
-        print(f"   Password: {'********' if admin_password else 'Not set'}")
-    else:
-        print("ℹ️  Admin user already exists")
-
-if __name__ == '__main__':
-    create_admin()
+# Create admin user if it doesn't exist
+if not User.objects.filter(username='muq').exists():
+    print("Creating admin user 'muq' for production...")
+    User.objects.create_superuser(
+        username='muq',
+        email='admin@muq.com',
+        password='12345',
+        user_type='admin',
+        first_name='Admin',
+        last_name='User'
+    )
+    print("Admin user created successfully!")
+else:
+    print("Admin user 'muq' already exists.")
