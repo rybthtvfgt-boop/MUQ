@@ -113,14 +113,6 @@ def start_training(request):
     """Start AI model training"""
     global training_status
 
-    # Check if ML libraries are available
-    try:
-        import tensorflow
-    except ImportError:
-        return Response({
-            'error': 'AI training is not available on this deployment. TensorFlow is not installed.'
-        }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-
     # Check if there's a running session in the database
     running_session = TrainingSession.objects.filter(status='running').first()
     if running_session:
