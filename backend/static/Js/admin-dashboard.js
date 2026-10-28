@@ -49,11 +49,15 @@ function showSection(sectionId) {
     document.querySelectorAll('.sidebar nav ul li a').forEach(link => {
         link.classList.remove('active');
     });
-    event.target.classList.add('active');
+    if (event && event.target) {
+        event.target.classList.add('active');
+    }
 
     // Load section data
     if (sectionId === 'overview') {
         loadOverview();
+    } else if (sectionId === 'users') {
+        loadUsers();
     } else if (sectionId === 'students') {
         loadStudents();
     } else if (sectionId === 'teachers') {
@@ -1515,6 +1519,259 @@ document.getElementById('branchForm').addEventListener('submit', function(e) {
 
     closeBranchModal();
     loadBranches();
+});
+
+// ==================== User Management Functions ====================
+
+let allUsers = [];
+
+async function loadUsers() {
+    try {
+        const response = await fetch('/api/users/', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+            }
+        });
+
+        if (!response.ok) {
+            console.error('Failed to load users');
+            return;
+        }
+
+        const data = await response.json();
+        allUsers = data.results || data;
+
+        // Apply filters
+        const typeFilter = document.getElementById('userTypeFilter').value;
+        const statusFilter = document.getElementById('userStatusFilter').value;
+
+        let filteredUsers = allUsers;
+
+        if (typeFilter) {
+            filteredUsers = filteredUsers.filter(user => user.user_type === typeFilter);
+        }
+
+        if (statusFilter) {
+            filteredUsers = filteredUsers.filter(user =>
+                statusFilter === 'active' ? user.is_active : !user.is_active
+            );
+        }
+
+        renderUsersTable(filteredUsers);
+    } catch (error) {
+        console.error('Error loading users:', error);
+    }
+}
+
+function renderUsersTable(users) {
+    const tbody = document.getElementById('usersTableBody');
+    tbody.innerHTML = '';
+
+    if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">لا يوجد مستخدمين</td></tr>';
+        return;
+    }
+
+    users.forEach(user => {
+        const row = document.createElement('tr');
+        const typeLabels = {
+            'student': 'طالب',
+            'teacher': 'مدرس',
+            'administrative': 'موظف إداري',
+            'security': 'موظف أمني',
+            'service': 'موظف خدمة',
+            'gate': 'بوابة',
+            'registration': 'قسم التسجيل',
+            'admin': 'مشرف'
+        };
+
+        row.innerHTML = `
+            <td>${escapeHtml(user.name)}</td>
+            <td>${typeLabels[user.user_type] || user.user_type}</td>
+            <td>${escapeHtml(user.code || '-')}</td>
+            <td>${escapeHtml(user.department_name || '-')}</td>
+            <td>
+                <span class="status-badge ${user.is_active ? 'active' : 'inactive'}">
+                    ${user.is_active ? 'نشط' : 'غير نشط'}
+                </span>
+            </td>
+            <td>${new Date(user.created_at).toLocaleDateString('ar-EG')}</td>
+            <td>
+                <button class="btn btn-add" onclick="editUser(${user.id})">تعديل</button>
+                <button class="btn btn-delete" onclick="toggleUserStatus(${user.id})">
+                    ${user.is_active ? 'تعطيل' : 'تفعيل'}
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function searchUsers() {
+    const searchTerm = document.getElementById('userSearchInput').value.toLowerCase();
+    if (!searchTerm) {
+        loadUsers();
+        return;
+    }
+
+    const filteredUsers = allUsers.filter(user =>
+        user.name.toLowerCase().includes(searchTerm) ||
+        (user.code && user.code.toLowerCase().includes(searchTerm)) ||
+        (user.email && user.email.toLowerCase().includes(searchTerm))
+    );
+
+    renderUsersTable(filteredUsers);
+}
+
+function openUserModal(userId = null) {
+    const modal = document.getElementById('userModal');
+    const title = document.getElementById('userModalTitle');
+    const form = document.getElementById('userForm');
+
+    form.reset();
+    document.getElementById('userId').value = '';
+
+    if (userId) {
+        title.textContent = 'تعديل المستخدم';
+        const user = allUsers.find(u => u.id === userId);
+        if (user) {
+            document.getElementById('userId').value = user.id;
+            document.getElementById('userName').value = user.name;
+            document.getElementById('userType').value = user.user_type;
+            document.getElementById('userCode').value = user.code || '';
+            document.getElementById('userEmail').value = user.email || '';
+            document.getElementById('userPhone').value = user.phone || '';
+            document.getElementById('userDepartment').value = user.department || '';
+            document.getElementById('userStage').value = user.stage || '';
+            document.getElementById('userBranch').value = user.branch || '';
+            document.getElementById('userUsername').value = user.username;
+            document.getElementById('userStatus').value = user.is_active ? 'active' : 'inactive';
+        }
+    } else {
+        title.textContent = 'إضافة مستخدم جديد';
+    }
+
+    modal.style.display = 'block';
+    loadDepartmentsSelect();
+}
+
+function closeUserModal() {
+    document.getElementById('userModal').style.display = 'none';
+}
+
+async function editUser(userId) {
+    openUserModal(userId);
+}
+
+async function toggleUserStatus(userId) {
+    if (!confirm('هل أنت متأكد من تغيير حالة هذا المستخدم؟')) {
+        return;
+    }
+
+    try {
+        const user = allUsers.find(u => u.id === userId);
+        const newStatus = !user.is_active;
+
+        const response = await fetch(`/api/users/${userId}/${newStatus ? 'reactivate' : 'deactivate'}/`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+            }
+        });
+
+        if (response.ok) {
+            alert('تم تغيير حالة المستخدم بنجاح');
+            loadUsers();
+        } else {
+            alert('تعذّر تغيير حالة المستخدم');
+        }
+    } catch (error) {
+        console.error('Error toggling user status:', error);
+        alert('حدث خطأ أثناء تغيير حالة المستخدم');
+    }
+}
+
+async function loadDepartmentsSelect() {
+    const select = document.getElementById('userDepartment');
+    try {
+        const response = await fetch('/api/departments/', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            const departments = data.results || data;
+            select.innerHTML = '<option value="">-- اختر القسم --</option>' +
+                departments.map(dept => `<option value="${dept.id}">${dept.name}</option>`).join('');
+        }
+    } catch (error) {
+        console.error('Error loading departments:', error);
+    }
+}
+
+// User form submission
+document.getElementById('userForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const userId = document.getElementById('userId').value;
+    const userData = {
+        name: document.getElementById('userName').value,
+        user_type: document.getElementById('userType').value,
+        code: document.getElementById('userCode').value,
+        email: document.getElementById('userEmail').value,
+        phone: document.getElementById('userPhone').value,
+        department: document.getElementById('userDepartment').value || null,
+        stage: document.getElementById('userStage').value || null,
+        branch: document.getElementById('userBranch').value || null,
+        username: document.getElementById('userUsername').value,
+        is_active: document.getElementById('userStatus').value === 'active'
+    };
+
+    const password = document.getElementById('userPassword').value;
+    if (password) {
+        userData.password = password;
+    }
+
+    try {
+        let response;
+        if (userId) {
+            response = await fetch(`/api/users/${userId}/`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+                },
+                body: JSON.stringify(userData)
+            });
+        } else {
+            if (!password) {
+                alert('كلمة المرور مطلوبة للمستخدمين الجدد');
+                return;
+            }
+            response = await fetch('/api/users/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+                },
+                body: JSON.stringify(userData)
+            });
+        }
+
+        if (response.ok) {
+            alert(userId ? 'تم تحديث المستخدم بنجاح' : 'تم إضافة المستخدم بنجاح');
+            closeUserModal();
+            loadUsers();
+        } else {
+            const error = await response.json();
+            alert('حدث خطأ: ' + (error.error || error.detail || 'فشل العملية'));
+        }
+    } catch (error) {
+        console.error('Error saving user:', error);
+        alert('حدث خطأ أثناء حفظ المستخدم');
+    }
 });
 
 // Initialize

@@ -1,0 +1,109 @@
+# Dangerous Activity Detection System Configuration
+# UCF-Crimes Dataset - Dangerous Activity Detection
+
+# Dataset paths
+dataset:
+  path: F:/MUQ/UCF_Crimes/UCF_Crimes/Videos
+  normal_videos:
+    train: Training_Normal_Videos_Anomaly
+    test: Testing_Normal_Videos_Anomaly
+  dangerous_activities:
+    - Abuse
+    - Arrest
+    - Arson
+    - Assault
+    - Burglary
+    - Explosion
+    - Fighting
+    - RoadAccidents
+    - Robbery
+    - Shooting
+    - Shoplifting
+    - Stealing
+
+# Activity categories
+activities:
+  # Violent activities (high danger)
+  violent:
+    - Abuse
+    - Assault
+    - Fighting
+    - Shooting
+    - Robbery
+
+  # Property crimes (medium danger)
+  property:
+    - Burglary
+    - Shoplifting
+    - Stealing
+
+  # Emergency situations (high danger)
+  emergency:
+    - Arson
+    - Explosion
+    - RoadAccidents
+
+  # Law enforcement (medium danger)
+  enforcement:
+    - Arrest
+
+# Model configuration
+model:
+  # YOLOv8 model variants
+  variant: yolov8n  # n=nano, s=small, m=medium, l=large, x=xlarge
+  pretrained: true   # Use COCO pre-trained weights
+  confidence: 0.5   # Detection confidence threshold
+  iou: 0.45         # IoU threshold for NMS
+
+# Training parameters
+training:
+  epochs: 50
+  batch_size: 8
+  img_size: 640
+  device: cuda      # cuda or cpu
+  workers: 4
+  save_period: 10   # Save model every 10 epochs
+
+# Video processing
+video:
+  frame_sample_rate: 5  # Process every 5th frame
+  max_duration: 30       # Max video duration in seconds
+  output_fps: 15        # Output video FPS
+
+# Danger detection rules
+danger_detection:
+  # Thresholds for danger classification
+  person_count_threshold: 3      # Alert if more than 3 persons
+  weapon_detection: true          # Detect weapons
+  violence_detection: true        # Detect violent actions
+  motion_analysis: true           # Analyze motion patterns
+
+  # Danger levels
+  danger_levels:
+    low:
+      activities: ['Arrest']
+      response: 'monitor'
+    medium:
+      activities: ['Shoplifting', 'Stealing', 'Burglary']
+      response: 'alert'
+    high:
+      activities: ['Abuse', 'Assault', 'Fighting', 'Shooting', 'Robbery', 'Arson', 'Explosion', 'RoadAccidents']
+      response: 'emergency'
+
+# Alert system
+alerts:
+  enabled: true
+  notify_methods:
+    - console
+    - log
+    # - email
+    # - sms
+  alert_cooldown: 60  # Seconds between alerts for same location
+
+# Output
+output:
+  save_detections: true
+  save_alerts: true
+  save_video: true
+  output_dir: ./results
+  log_file: ./danger_detection.log

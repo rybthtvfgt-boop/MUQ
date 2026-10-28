@@ -1621,3 +1621,26 @@ button:focus {
     color: var(--info);
     border: 1px solid rgba(56, 189, 248, 0.3);
 }
+
+/* Status Badge Styles */
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+}
+
+.status-badge.active {
+    background: rgba(46, 204, 113, 0.15);
+    color: var(--success);
+    border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.status-badge.inactive {
+    background: rgba(255, 82, 82, 0.15);
+    color: var(--error);
+    border: 1px solid rgba(255, 82, 82, 0.3);
+}

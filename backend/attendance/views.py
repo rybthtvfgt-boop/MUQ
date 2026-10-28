@@ -7,8 +7,8 @@ from datetime import datetime, timedelta
 
 from users.permissions import IsSuperAdminOrReadOnly
 
-from .models import Attendance, Schedule
-from .serializers import AttendanceSerializer, ScheduleSerializer
+from .models import Attendance, Schedule, GateEntryExit
+from .serializers import AttendanceSerializer, ScheduleSerializer, GateEntryExitSerializer
 
 
 class AttendanceViewSet(viewsets.ModelViewSet):
@@ -307,4 +307,93 @@ def attendance_face_attempts(request):
     
     return Response({
         'results': results
+    })
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def gate_operation(request):
+    """Handle gate entry/exit operations via face recognition"""
+    from users.models import User, FaceSample
+    import numpy as np
+    import uuid
+
+    embedding = request.data.get('embedding')
+    operation = request.data.get('operation', 'entry')
+    location = request.data.get('location', 'البوابة الرئيسية')
+
+    if not embedding:
+        return Response({'error': 'Embedding required'}, status=400)
+
+    if len(embedding) != 128:
+        return Response({'error': 'Embedding must be 128-dimensional'}, status=400)
+
+    if operation not in ['entry', 'exit']:
+        return Response({'error': 'Invalid operation type'}, status=400)
+
+    # Try to recognize face
+    best_match = None
+    best_distance = float('inf')
+
+    samples = FaceSample.objects.select_related('profile__person').all()
+    for sample in samples:
+        sample_embedding = sample.embedding
+        if sample_embedding and len(sample_embedding) == 128:
+            distance = np.sqrt(sum((a - b) ** 2 for a, b in zip(embedding, sample_embedding)))
+            if distance < best_distance:
+                best_distance = distance
+                best_match = sample
+
+    threshold = 0.6
+    if not best_match or best_distance >= threshold:
+        return Response({
+            'matched': False,
+            'saved': False,
+            'reason': 'وجه غير معروف'
+        })
+
+    person = best_match.profile.person
+
+    # Create gate entry/exit record
+    operation_id = str(uuid.uuid4())
+    gate_record = GateEntryExit.objects.create(
+        person=person,
+        operation=operation,
+        location=location,
+        verified_by_face=True
+    )
+
+    return Response({
+        'matched': True,
+        'saved': True,
+        'operation_id': operation_id,
+        'person': {
+            'id': person.id,
+            'name': person.name,
+            'user_type': person.user_type,
+            'code': person.code
+        },
+        'operation': operation,
+        'timestamp': gate_record.timestamp.isoformat()
+    })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def gate_operation_log(request):
+    """Get gate entry/exit log"""
+    today = request.query_params.get('today') == '1'
+    limit = int(request.query_params.get('limit', 50))
+
+    qs = GateEntryExit.objects.select_related('person').order_by('-timestamp')
+
+    if today:
+        today_date = timezone.now().date()
+        qs = qs.filter(timestamp__date=today_date)
+
+    qs = qs[:limit]
+
+    serializer = GateEntryExitSerializer(qs, many=True)
+    return Response({
+        'results': serializer.data
     })

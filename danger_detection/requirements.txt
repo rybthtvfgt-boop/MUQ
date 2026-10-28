@@ -1,0 +1,23 @@
+# Dangerous Activity Detection System Requirements
+# Python 3.8+
+
+# Core ML/DL
+torch>=2.0.0
+torchvision>=0.15.0
+ultralytics>=8.0.0
+
+# Computer Vision
+opencv-python>=4.8.0
+numpy>=1.24.0
+Pillow>=10.0.0
+
+# Data processing
+pandas>=2.0.0
+pyyaml>=6.0
+
+# Video processing
+ffmpeg-python>=0.2.0
+
+# Utilities
+tqdm>=4.65.0
+requests>=2.31.0

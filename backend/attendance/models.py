@@ -72,3 +72,34 @@ class Schedule(models.Model):
 
     def __str__(self):
         return f'{self.day} - {self.time} - {self.subject}'
+
+
+class GateEntryExit(models.Model):
+    """Track gate entry and exit events for all personnel."""
+
+    OPERATION_CHOICES = [
+        ('entry', 'دخول'),
+        ('exit', 'خروج'),
+    ]
+
+    person = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+        related_name='gate_entries', verbose_name='الشخص')
+    operation = models.CharField(
+        max_length=10, choices=OPERATION_CHOICES, verbose_name='نوع العملية')
+    timestamp = models.DateTimeField(auto_now_add=True, verbose_name='الوقت')
+    location = models.CharField(max_length=200, default='البوابة الرئيسية', verbose_name='الموقع')
+    verified_by_face = models.BooleanField(default=True, verbose_name='تم التحقق بالوجه')
+    notes = models.TextField(blank=True, verbose_name='ملاحظات')
+
+    class Meta:
+        verbose_name = 'سجل بوابة'
+        verbose_name_plural = 'سجلات البوابات'
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['person', 'timestamp']),
+            models.Index(fields=['operation', 'timestamp']),
+        ]
+
+    def __str__(self):
+        return f'{self.person.name} - {self.get_operation_display()} - {self.timestamp}'

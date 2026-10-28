@@ -13,6 +13,7 @@
             <nav>
                 <ul>
                     <li><a href="#" class="active" onclick="showSection('overview')">نظرة عامة</a></li>
+                    <li><a href="#" onclick="showSection('users')">إدارة المستخدمين</a></li>
                     <li><a href="#" onclick="showSection('classifications')">التصنيفات</a></li>
                     <li><a href="#" onclick="showSection('students')">إدارة الطلاب</a></li>
                     <li><a href="#" onclick="showSection('teachers')">إدارة المدرسين</a></li>
@@ -30,7 +31,8 @@
             <div class="header">
                 <h1>لوحة تحكم الأدمن</h1>
                 <div>
-                    <button class="btn btn-add" onclick="window.open('gate-entry.html', '_blank')">بوابة الدخول</button>
+                    <button class="btn btn-add" onclick="window.open('gate-entry.html', '_blank')">بوابة الحضور</button>
+                    <button class="btn btn-add" onclick="window.open('gate-entry-exit.html', '_blank')">بوابة الدخول والخروج</button>
                     <button class="btn btn-add" onclick="window.open('face-registration-new.html', '_blank')">بوابة التسجيل</button>
                     <button class="logout-btn" onclick="logout()">تسجيل الخروج</button>
                 </div>
@@ -55,6 +57,47 @@
                         <h3>نسبة الحضور</h3>
                         <div class="number" id="attendanceRate">0%</div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Users Management Section -->
+            <div id="users" class="section" style="display: none;">
+                <div class="table-container">
+                    <h2>إدارة المستخدمين</h2>
+                    <div class="filter-row" style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <select id="userTypeFilter" onchange="loadUsers()">
+                            <option value="">-- جميع الأنواع --</option>
+                            <option value="student">طالب</option>
+                            <option value="teacher">مدرس</option>
+                            <option value="administrative">موظف إداري</option>
+                            <option value="security">موظف أمني</option>
+                            <option value="service">موظف خدمة</option>
+                            <option value="gate">بوابة</option>
+                            <option value="registration">قسم التسجيل</option>
+                        </select>
+                        <select id="userStatusFilter" onchange="loadUsers()">
+                            <option value="">-- جميع الحالات --</option>
+                            <option value="active">نشط</option>
+                            <option value="inactive">غير نشط</option>
+                        </select>
+                        <input type="text" id="userSearchInput" placeholder="بحث بالاسم أو الرقم..." onkeyup="searchUsers()">
+                        <button class="btn btn-add" onclick="openUserModal()">إضافة مستخدم جديد</button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>الاسم</th>
+                                <th>النوع</th>
+                                <th>الرقم الوظيفي/الجامعي</th>
+                                <th>القسم</th>
+                                <th>الحالة</th>
+                                <th>تاريخ الإنشاء</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -626,6 +669,80 @@
                 <div class="form-group">
                     <label for="branchDescription">الوصف</label>
                     <textarea id="branchDescription" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn-primary">حفظ</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- User Management Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="userModalTitle">إضافة مستخدم جديد</h2>
+                <button class="close-modal" onclick="closeUserModal()">&times;</button>
+            </div>
+            <form id="userForm">
+                <input type="hidden" id="userId">
+                <div class="form-group">
+                    <label for="userName">الاسم الكامل</label>
+                    <input type="text" id="userName" required>
+                </div>
+                <div class="form-group">
+                    <label for="userType">نوع المستخدم</label>
+                    <select id="userType" required>
+                        <option value="">-- اختر النوع --</option>
+                        <option value="student">طالب</option>
+                        <option value="teacher">مدرس</option>
+                        <option value="administrative">موظف إداري</option>
+                        <option value="security">موظف أمني</option>
+                        <option value="service">موظف خدمة</option>
+                        <option value="gate">بوابة</option>
+                        <option value="registration">قسم التسجيل</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="userCode">الرقم الوظيفي/الجامعي</label>
+                    <input type="text" id="userCode" required>
+                </div>
+                <div class="form-group">
+                    <label for="userEmail">البريد الإلكتروني</label>
+                    <input type="email" id="userEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="userPhone">رقم الهاتف</label>
+                    <input type="tel" id="userPhone">
+                </div>
+                <div class="form-group">
+                    <label for="userDepartment">القسم</label>
+                    <select id="userDepartment">
+                        <option value="">-- اختر القسم --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="userStage">المرحلة</label>
+                    <select id="userStage">
+                        <option value="">-- اختر المرحلة --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="userBranch">الشعبة</label>
+                    <input type="text" id="userBranch" placeholder="اسم الشعبة">
+                </div>
+                <div class="form-group">
+                    <label for="userUsername">اسم المستخدم</label>
+                    <input type="text" id="userUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="userPassword">كلمة المرور</label>
+                    <input type="password" id="userPassword">
+                </div>
+                <div class="form-group">
+                    <label for="userStatus">الحالة</label>
+                    <select id="userStatus">
+                        <option value="active">نشط</option>
+                        <option value="inactive">غير نشط</option>
+                    </select>
                 </div>
                 <button type="submit" class="btn-primary">حفظ</button>
             </form>

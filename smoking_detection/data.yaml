@@ -1,0 +1,16 @@
+# Smoking Detection Dataset Configuration
+# Binary classification: smoking vs not-smoking
+
+# Dataset paths
+path: F:/MUQ/dataset
+train: training_data  # training images
+val: validation_data  # validation images
+test: testing_data    # test images
+
+# Classes
+names:
+  0: smoking      # Person smoking
+  1: notsmoking   # Person not smoking
+
+# Dataset info
+nc: 2  # number of classes

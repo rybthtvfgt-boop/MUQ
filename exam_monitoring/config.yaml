@@ -1,0 +1,88 @@
+# Exam Monitoring System Configuration
+# CCTV-based exam cheating detection with YOLOv8
+
+# Dataset paths
+dataset:
+  path: F:/MUQ/CCTV-Exam -Monitor -Dataset
+  train: train
+  test: test
+  valid: valid
+
+# Detection tasks
+detection:
+  # COCO classes that are relevant for exam monitoring
+  person: 0           # Student/Teacher
+  cell_phone: 67      # Phone
+  book: 84            # Book/Paper
+  laptop: 63          # Laptop
+  keyboard: 66        # Keyboard
+  mouse: 64           # Mouse
+  remote: 74          # Remote control
+  cup: 41             # Cup (drinks)
+  bottle: 44          # Bottle
+
+# Model configuration
+model:
+  # YOLOv8 model variants (choose one)
+  variant: yolov8n  # n=nano, s=small, m=medium, l=large, x=xlarge
+  pretrained: true   # Use COCO pre-trained weights
+  confidence: 0.5   # Detection confidence threshold
+  iou: 0.45         # IoU threshold for NMS
+
+# Training parameters
+training:
+  epochs: 100
+  batch_size: 16
+  img_size: 640
+  device: cuda      # cuda or cpu
+  workers: 4
+  save_period: 10   # Save model every 10 epochs
+
+# Augmentation
+augmentation:
+  hsv_h: 0.015      # HSV-Hue augmentation
+  hsv_s: 0.7        # HSV-Saturation augmentation
+  hsv_v: 0.4        # HSV-Value augmentation
+  degrees: 0.0      # Rotation (+/- deg)
+  translate: 0.1    # Translation (+/- fraction)
+  scale: 0.5        # Scale (+/- gain)
+  shear: 0.0        # Shear (+/- deg)
+  perspective: 0.0  # Perspective (+/- fraction)
+  flipud: 0.0       # Flip up-down
+  fliplr: 0.5       # Flip left-right
+  mosaic: 1.0       # Mosaic augmentation
+  mixup: 0.0        # Mixup augmentation
+
+# Cheating detection rules
+cheating_detection:
+  # Detection rules for suspicious behavior
+  phone_threshold: 0.6    # Confidence threshold for phone detection
+  unauthorized_objects: ['cell_phone', 'laptop', 'keyboard', 'mouse']
+  head_movement_threshold: 30  # Maximum allowed head movement (degrees)
+  suspicious_actions:
+    - using_phone
+    - using_laptop
+    - looking_away
+    - exchanging_materials
+    - multiple_heads_in_frame
+
+# Face recognition
+face_recognition:
+  enabled: true
+  model: face-api.js  # or deepface
+  embedding_dim: 128
+  threshold: 0.6      # Recognition threshold
+
+# Student tracking
+tracking:
+  enabled: true
+  tracker: deepsort   # deepsort, byteTrack, or strongsort
+  max_age: 30         # Track persistence (frames)
+  min_hits: 3         # Minimum detections before track creation
+
+# Output
+output:
+  save_detections: true
+  save_tracks: true
+  save_video: false
+  output_dir: ./results
