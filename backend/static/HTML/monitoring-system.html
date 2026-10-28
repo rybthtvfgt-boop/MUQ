@@ -869,12 +869,17 @@
                     addLogEntry(`مسار الحفظ: ${data.model_save_path}`, 'info');
                     monitorTrainingProgress(data.session_id);
                 } else {
-                    const error = await response.json();
+                    let error;
+                    try {
+                        error = await response.json();
+                    } catch (e) {
+                        error = { error: `HTTP ${response.status}: ${response.statusText}` };
+                    }
                     if (error.error && error.error.includes('not available')) {
                         addLogEntry('⚠️ التدريب بالذكاء الاصطناعي غير متاح على هذه المنصة', 'error');
                         addLogEntry('يرجى استخدام النسخة المحلية للتدريب', 'info');
                     } else {
-                        addLogEntry(`فشل بدء التدريب: ${error.error}`, 'error');
+                        addLogEntry(`فشل بدء التدريب: ${error.error || 'خطأ غير معروف'}`, 'error');
                     }
                     isTraining = false;
                     if (startTrainingBtn) startTrainingBtn.disabled = false;
