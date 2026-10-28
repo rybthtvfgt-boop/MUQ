@@ -9,7 +9,7 @@ COPY backend/ .
 
 RUN python manage.py collectstatic --noinput
 
-COPY backend/docker-entrypoint.sh /app/
+COPY docker-entrypoint.sh /app/
 RUN chmod +x /app/docker-entrypoint.sh
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
