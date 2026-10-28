@@ -20,6 +20,10 @@ TRAINING_SCRIPT = os.path.join(os.path.dirname(__file__), '..', 'train_monitorin
 LOG_FILE = os.path.join(DATASET_PATH, 'training_log.json')
 MODEL_SAVE_PATH = os.path.join(DATASET_PATH, 'trained_model')
 
+# Ensure dataset directory exists
+os.makedirs(DATASET_PATH, exist_ok=True)
+os.makedirs(MODEL_SAVE_PATH, exist_ok=True)
+
 # Global training state
 training_status = {
     'is_training': False,
@@ -273,4 +277,36 @@ def predict_image(request):
     return Response({
         'message': 'Model prediction not yet implemented',
         'note': 'Implement after training is complete'
+    })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def upload_training_image(request):
+    """Upload a single training image to the dataset"""
+    from django.core.files.storage import default_storage
+    import shutil
+
+    if 'image' not in request.FILES:
+        return Response({'error': 'No image file provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+    image_file = request.FILES['image']
+    category = request.data.get('category', 'training_data')
+    label = request.data.get('label', 'unknown')
+
+    # Create category and label directories
+    target_dir = os.path.join(DATASET_PATH, category, label)
+    os.makedirs(target_dir, exist_ok=True)
+
+    # Save the image
+    file_path = os.path.join(target_dir, image_file.name)
+    with open(file_path, 'wb') as f:
+        for chunk in image_file.chunks():
+            f.write(chunk)
+
+    return Response({
+        'message': 'Image uploaded successfully',
+        'path': file_path,
+        'category': category,
+        'label': label
     })

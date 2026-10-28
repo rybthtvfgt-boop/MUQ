@@ -11,5 +11,6 @@ urlpatterns = [
     path('training/reset/', views.reset_training, name='reset_training'),
     path('training/sessions/<int:session_id>/', views.get_training_session, name='training_session'),
     path('dataset/info/', views.get_dataset_info, name='dataset_info'),
+    path('dataset/upload/', views.upload_training_image, name='upload_training_image'),
     path('predict/', views.predict_image, name='predict_image'),
 ]
