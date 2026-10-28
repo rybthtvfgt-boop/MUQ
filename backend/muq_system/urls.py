@@ -38,7 +38,10 @@ urlpatterns = [
     path('api/', include('attendance.urls')),
     path('api/monitoring/', include('monitoring.urls')),
 
-    # Frontend
+    # Frontend static files
+    path('app/', include('django.contrib.staticfiles.urls')),
+
+    # Frontend index
     path('app/', frontend_index, name='frontend'),
 
     # Template views
