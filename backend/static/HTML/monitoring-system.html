@@ -875,7 +875,10 @@
                     } catch (e) {
                         error = { error: `HTTP ${response.status}: ${response.statusText}` };
                     }
-                    if (error.error && error.error.includes('not available')) {
+                    if (response.status === 401) {
+                        addLogEntry('⚠️ يجب تسجيل الدخول لبدء التدريب', 'error');
+                        addLogEntry('يرجى تسجيل الدخول ثم المحاولة مرة أخرى', 'info');
+                    } else if (error.error && error.error.includes('not available')) {
                         addLogEntry('⚠️ التدريب بالذكاء الاصطناعي غير متاح على هذه المنصة', 'error');
                         addLogEntry('يرجى استخدام النسخة المحلية للتدريب', 'info');
                     } else {
