@@ -15,7 +15,7 @@ from rest_framework import status
 from .models import TrainingSession, TrainedModel
 
 # Configuration
-DATASET_PATH = r'F:\MUQ\dataset'
+DATASET_PATH = os.environ.get('DATASET_PATH', os.path.join(os.path.dirname(__file__), '..', '..', 'dataset'))
 TRAINING_SCRIPT = os.path.join(os.path.dirname(__file__), '..', 'train_monitoring_model.py')
 LOG_FILE = os.path.join(DATASET_PATH, 'training_log.json')
 MODEL_SAVE_PATH = os.path.join(DATASET_PATH, 'trained_model')
@@ -112,6 +112,14 @@ def run_training(session_id, dataset_path, model_save_path):
 def start_training(request):
     """Start AI model training"""
     global training_status
+
+    # Check if ML libraries are available
+    try:
+        import tensorflow
+    except ImportError:
+        return Response({
+            'error': 'AI training is not available on this deployment. TensorFlow is not installed.'
+        }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
     # Check if there's a running session in the database
     running_session = TrainingSession.objects.filter(status='running').first()

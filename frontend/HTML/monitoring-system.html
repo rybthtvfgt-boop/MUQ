@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>نظام المراقبة - لوحة الأدمن</title>
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css">
     <style>
         .monitoring-container {
             padding: 30px;
@@ -733,7 +733,7 @@
         </div>
     </div>
 
-    <script src="../Js/api-client.js"></script>
+    <script src="/static/Js/api-client.js"></script>
     <script>
         // Global variables
         let isTraining = false;
@@ -870,7 +870,12 @@
                     monitorTrainingProgress(data.session_id);
                 } else {
                     const error = await response.json();
-                    addLogEntry(`فشل بدء التدريب: ${error.error}`, 'error');
+                    if (error.error && error.error.includes('not available')) {
+                        addLogEntry('⚠️ التدريب بالذكاء الاصطناعي غير متاح على هذه المنصة', 'error');
+                        addLogEntry('يرجى استخدام النسخة المحلية للتدريب', 'info');
+                    } else {
+                        addLogEntry(`فشل بدء التدريب: ${error.error}`, 'error');
+                    }
                     isTraining = false;
                     if (startTrainingBtn) startTrainingBtn.disabled = false;
                     enableTrainingButtons();
