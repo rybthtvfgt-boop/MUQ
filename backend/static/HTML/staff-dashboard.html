@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم الموظف - نظام MUQ</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <h2>نظام MUQ</h2>
+            <nav>
+                <ul>
+                    <li><a href="#" class="active" onclick="showSection('overview')">نظرة عامة</a></li>
+                    <li><a href="#" onclick="showSection('attendance')">تسجيل الحضور</a></li>
+                    <li><a href="#" onclick="showSection('history')">سجل الحضور</a></li>
+                    <li><a href="#" onclick="showSection('profile')">الملف الشخصي</a></li>
+                    <li><a href="gate-entry.html" target="_blank">بوابة الدخول</a></li>
+                </ul>
+            </nav>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1>لوحة تحكم الموظف</h1>
+                <div>
+                    <span id="staffName" style="margin-left: 20px; font-weight: 600;"></span>
+                    <button class="logout-btn" onclick="logout()">تسجيل الخروج</button>
+                </div>
+            </div>
+
+            <!-- Overview Section -->
+            <div id="overview" class="section">
+                <div class="cards-container">
+                    <div class="card">
+                        <h3>أيام الحضور هذا الشهر</h3>
+                        <div class="number" id="presentDays">0</div>
+                    </div>
+                    <div class="card">
+                        <h3>أيام الغياب هذا الشهر</h3>
+                        <div class="number" id="absentDays">0</div>
+                    </div>
+                    <div class="card">
+                        <h3>نسبة الحضور</h3>
+                        <div class="number" id="attendanceRate">0%</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <h3>إحصائيات الحضور الشهرية</h3>
+                    <div class="stat-chart" id="monthlyChart">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attendance Section -->
+            <div id="attendance" class="section" style="display: none;">
+                <div class="camera-container">
+                    <h2>تسجيل الحضور</h2>
+                    <div id="staffFaceStatus" class="face-status info">
+                        يرجى الوقود أمام الكاميرا لتسجيل حضورك
+                    </div>
+                    <video id="staffVideo" autoplay playsinline></video>
+                    <canvas id="staffCanvas" style="display: none;"></canvas>
+                    <div class="camera-controls">
+                        <button class="btn btn-add" id="staffCaptureBtn" onclick="captureStaffFace()">تسجيل الحضور</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Section -->
+            <div id="history" class="section" style="display: none;">
+                <div class="table-container">
+                    <h2>سجل الحضور</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>التاريخ</th>
+                                <th>الوقت</th>
+                                <th>الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Profile Section -->
+            <div id="profile" class="section" style="display: none;">
+                <div class="table-container">
+                    <h2>الملف الشخصي</h2>
+                    <button class="btn btn-add" onclick="registerFace()">تسجيل الوجه</button>
+                    <div id="profileContent">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../Js/api-client.js"></script>
+    <script src="../Js/database.js"></script>
+    <script src="../Js/face-recognition.js"></script>
+    <script src="../Js/staff-dashboard.js"></script>
+</body>
+</html>

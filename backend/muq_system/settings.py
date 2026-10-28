@@ -29,14 +29,12 @@ DEBUG = env_bool('DEBUG', False)
 
 SECRET_KEY = os.environ.get('SECRET_KEY', '')
 if not SECRET_KEY:
-    if DEBUG:
-        # Disposable key so local development boots; never used in production.
-        SECRET_KEY = 'django-insecure-local-development-only'
-    else:
-        # Temporary fallback for Railway deployment - should be set in env vars
-        SECRET_KEY = 'django-insecure-production-temp-fallback'
+    # Temporary fallback for collectstatic - should be set in env vars
+    SECRET_KEY = 'django-insecure-build-time-fallback'
 
 ALLOWED_HOSTS = env_list('ALLOWED_HOSTS', 'localhost,127.0.0.1' if DEBUG else '.railway.app,.vercel.app')
+if not ALLOWED_HOSTS:
+    ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -75,7 +73,7 @@ ROOT_URLCONF = 'muq_system.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [BASE_DIR / 'templates', BASE_DIR / 'static'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

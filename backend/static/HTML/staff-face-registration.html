@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل وجه الموظف - نظام MUQ</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="main-content" style="margin-right: 0;">
+            <div class="header">
+                <h1>تسجيل وجه الموظف</h1>
+                <button class="logout-btn" onclick="goBack()">رجوع</button>
+            </div>
+
+            <div class="camera-container">
+                <h2 id="personName">جاري التحميل...</h2>
+                <div id="faceStatus" class="face-status info">
+                    يرجى التأكد من أن وجهك واضح في الإطار
+                </div>
+                <video id="videoElement" autoplay playsinline></video>
+                <canvas id="canvasElement"></canvas>
+                <div class="camera-controls">
+                    <button class="btn btn-add" id="captureBtn" onclick="captureFace()">التقاط الصورة</button>
+                    <button class="btn btn-confirm" id="saveBtn" onclick="saveFaceData()" style="display: none;">حفظ بيانات الوجه</button>
+                    <button class="btn btn-delete" onclick="retakePhoto()" style="display: none;" id="retakeBtn">إعادة التصوير</button>
+                </div>
+            </div>
+
+            <div class="table-container" id="capturedImagesContainer" style="display: none;">
+                <h2>الصور الملتقطة</h2>
+                <div id="capturedImages" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../Js/api-client.js"></script>
+    <script src="../Js/database.js"></script>
+    <script src="../Js/face-recognition.js"></script>
+    <script src="../Js/staff-face-registration.js"></script>
+</body>
+</html>

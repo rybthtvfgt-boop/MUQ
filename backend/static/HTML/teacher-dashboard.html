@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم المدرس - نظام MUQ</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <h2>نظام MUQ</h2>
+            <nav>
+                <ul>
+                    <li><a href="#" class="active" onclick="showSection('overview')">نظرة عامة</a></li>
+                    <li><a href="#" onclick="showSection('attendance')">تسجيل الحضور</a></li>
+                    <li><a href="#" onclick="showSection('my-schedule')">جدولي</a></li>
+                    <li><a href="#" onclick="showSection('history')">سجل الحضور</a></li>
+                    <li><a href="#" onclick="showSection('profile')">الملف الشخصي</a></li>
+                    <li><a href="attendance-report.html" target="_blank">تقرير الحضور والغياب</a></li>
+                </ul>
+            </nav>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1>لوحة تحكم المدرس</h1>
+                <div>
+                    <span id="teacherName" style="margin-left: 20px; font-weight: 600;"></span>
+                    <button class="logout-btn" onclick="logout()">تسجيل الخروج</button>
+                </div>
+            </div>
+
+            <!-- Overview Section -->
+            <div id="overview" class="section">
+                <div class="cards-container">
+                    <div class="card">
+                        <h3>محاضرات اليوم</h3>
+                        <div class="number" id="todayLectures">0</div>
+                    </div>
+                    <div class="card">
+                        <h3>إجمالي الطلاب</h3>
+                        <div class="number" id="totalStudents">0</div>
+                    </div>
+                    <div class="card">
+                        <h3>نسبة الحضور هذا الأسبوع</h3>
+                        <div class="number" id="weekAttendance">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attendance Section -->
+            <div id="attendance" class="section" style="display: none;">
+                <div class="camera-container">
+                    <h2>تسجيل الحضور</h2>
+                    <div class="form-group">
+                        <label for="lectureSelect">اختر المحاضرة حسب المادة والمرحلة</label>
+                        <select id="lectureSelect" onchange="loadLectureStudents()">
+                            <option value="">-- اختر محاضرة --</option>
+                        </select>
+                    </div>
+                    <div id="lectureInfo" style="display: none; margin-top: 15px; padding: 10px; background: #f5f6fa; border-radius: 5px;">
+                        <p><strong>المادة:</strong> <span id="lectureSubject"></span></p>
+                        <p><strong>المرحلة:</strong> <span id="lectureStage"></span></p>
+                        <p><strong>الشعبة:</strong> <span id="lectureBranch"></span></p>
+                        <p><strong>القسم:</strong> <span id="lectureDepartment"></span></p>
+                        <p><strong>الوقت:</strong> <span id="lectureTime"></span></p>
+                        <p><strong>عدد الطلاب المسجلين:</strong> <span id="studentCount"></span></p>
+                    </div>
+                </div>
+
+                <div id="attendanceContent" style="display: none;">
+                    <!-- Teacher Attendance -->
+                    <div class="camera-container">
+                        <h3>1. تسجيل حضور المدرس</h3>
+                        <div id="teacherFaceStatus" class="face-status info">
+                            يرجى الوقود أمام الكاميرا لتسجيل حضورك
+                        </div>
+                        <video id="teacherVideo" autoplay playsinline></video>
+                        <canvas id="teacherCanvas" style="display: none;"></canvas>
+                        <div class="camera-controls">
+                            <button class="btn btn-add" id="teacherCaptureBtn" onclick="captureTeacherFace()">تسجيل الحضور</button>
+                        </div>
+                    </div>
+
+                    <!-- Students Attendance -->
+                    <div class="camera-container" id="studentAttendanceSection" style="display: none;">
+                        <h3>2. تسجيل حضور الطلاب</h3>
+                        <div id="studentFaceStatus" class="face-status info">
+                            يرجى إحضار الطلاب أمام الكاميرا واحداً تلو الآخر
+                        </div>
+                        <video id="studentVideo" autoplay playsinline></video>
+                        <canvas id="studentCanvas" style="display: none;"></canvas>
+                        <div class="camera-controls">
+                            <button class="btn btn-add" id="studentCaptureBtn" onclick="captureStudentFace()">تسجيل حضور الطالب</button>
+                        </div>
+                    </div>
+
+                    <!-- Attendance List -->
+                    <div class="attendance-list">
+                        <h3>قائمة الحضور</h3>
+                        <div id="attendanceList"></div>
+                    </div>
+
+                    <!-- End Lecture -->
+                    <div class="camera-container" id="endLectureSection" style="display: none;">
+                        <h3>3. تأكيد نهاية المحاضرة</h3>
+                        <div id="endLectureStatus" class="face-status info">
+                            يرجى تصوير نفسك لتأكيد نهاية المحاضرة
+                        </div>
+                        <video id="endLectureVideo" autoplay playsinline></video>
+                        <canvas id="endLectureCanvas" style="display: none;"></canvas>
+                        <div class="camera-controls">
+                            <button class="btn btn-confirm" id="endLectureBtn" onclick="confirmEndLecture()">تأكيد نهاية المحاضرة</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Schedule Section -->
+            <div id="my-schedule" class="section" style="display: none;">
+                <div class="table-container">
+                    <h2>جدولي الدراسي</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>اليوم</th>
+                                <th>الوقت</th>
+                                <th>المادة</th>
+                                <th>القسم</th>
+                                <th>المرحلة</th>
+                                <th>الشعبة</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scheduleTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- History Section -->
+            <div id="history" class="section" style="display: none;">
+                <div class="table-container">
+                    <h2>سجل الحضور</h2>
+                    <button class="btn btn-add" onclick="window.open('attendance-report.html', '_blank')">عرض تقرير مفصل</button>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>التاريخ</th>
+                                <th>المادة</th>
+                                <th>عدد الحاضرين</th>
+                                <th>الإجمالي</th>
+                                <th>النسبة</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Profile Section -->
+            <div id="profile" class="section" style="display: none;">
+                <div class="table-container">
+                    <h2>الملف الشخصي</h2>
+                    <button class="btn btn-add" onclick="registerFace()">تسجيل الوجه</button>
+                    <div id="profileContent">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../Js/api-client.js"></script>
+    <script src="../Js/database.js"></script>
+    <script src="../Js/face-recognition.js"></script>
+    <script src="../Js/teacher-dashboard.js"></script>
+</body>
+</html>

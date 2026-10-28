@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تقرير الحضور والغياب - نظام MUQ</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .filters-container {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .filters-container h2 {
+            margin-bottom: 20px;
+            color: var(--primary-orange);
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .filter-group select,
+        .filter-group input {
+            padding: 10px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+        }
+
+        .filter-group select:focus,
+        .filter-group input:focus {
+            outline: none;
+            border-color: var(--primary-orange);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .stat-box .number {
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--primary-orange);
+        }
+
+        .stat-box .label {
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        .stat-box.present .number {
+            color: var(--success);
+        }
+
+        .stat-box.absent .number {
+            color: var(--error);
+        }
+
+        .attendance-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .attendance-table th,
+        .attendance-table td {
+            padding: 12px;
+            text-align: right;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .attendance-table th {
+            background: var(--primary-orange);
+            color: white;
+            font-weight: 600;
+        }
+
+        .attendance-table tr:hover {
+            background: rgba(255, 107, 53, 0.1);
+        }
+
+        .badge {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-present {
+            background: var(--success);
+            color: white;
+        }
+
+        .badge-absent {
+            background: var(--error);
+            color: white;
+        }
+
+        .badge-pending {
+            background: var(--warning);
+            color: black;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-export {
+            background: var(--primary-orange);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-export:hover {
+            background: var(--secondary-orange);
+            transform: translateY(-2px);
+        }
+
+        .alert-item {
+            background: rgba(255, 61, 0, 0.1);
+            border: 2px solid var(--error);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .alert-item .student-info {
+            flex: 1;
+        }
+
+        .alert-item .student-name {
+            font-weight: bold;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+
+        .alert-item .absent-count {
+            color: var(--error);
+            font-weight: bold;
+        }
+
+        .alert-item .alert-badge {
+            background: var(--error);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        @media print {
+            .sidebar,
+            .header,
+            .filters-container,
+            .export-buttons {
+                display: none !important;
+            }
+
+            .main-content {
+                margin-right: 0 !important;
+                padding: 0 !important;
+            }
+
+            .table-container {
+                box-shadow: none !important;
+            }
+
+            .attendance-table {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <h2>نظام MUQ</h2>
+            <nav>
+                <ul>
+                    <li><a href="#" class="active">تقرير الحضور والغياب</a></li>
+                </ul>
+            </nav>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1>تقرير الحضور والغياب</h1>
+                <button class="logout-btn" onclick="goBack()">رجوع</button>
+            </div>
+
+            <!-- Filters Section -->
+            <div class="filters-container">
+                <h2>تصفية السجل</h2>
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label>نوع التقرير</label>
+                        <select id="reportType" onchange="toggleFilters()">
+                            <option value="students">سجل الطلاب</option>
+                            <option value="teachers">سجل المدرسين</option>
+                            <option value="administrative">سجل الموظفين الإداريين</option>
+                            <option value="security">سجل الموظفين الأمنيين</option>
+                            <option value="service">سجل موظفي الخدمة</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>الحد المسموح من الغياب</label>
+                        <input type="number" id="absenceLimit" value="5" min="1" onchange="updateAbsenceLimit()">
+                    </div>
+                    <div class="filter-group">
+                        <label>المادة</label>
+                        <select id="subjectFilter">
+                            <option value="">الكل</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>المرحلة</label>
+                        <select id="stageFilter">
+                            <option value="">الكل</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label>من تاريخ</label>
+                        <input type="date" id="startDate">
+                    </div>
+                    <div class="filter-group">
+                        <label>إلى تاريخ</label>
+                        <input type="date" id="endDate">
+                    </div>
+                    <div class="filter-group">
+                        <label>الحالة</label>
+                        <select id="statusFilter">
+                            <option value="">الكل</option>
+                            <option value="present">حاضر</option>
+                            <option value="absent">غائب</option>
+                            <option value="pending">في الانتظار</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label>بحث بالاسم</label>
+                        <input type="text" id="searchName" placeholder="أدخل اسم الطالب/المدرس">
+                    </div>
+                </div>
+                <div class="filter-buttons">
+                    <button class="btn btn-add" onclick="applyFilters()">تطبيق التصفية</button>
+                    <button class="btn btn-delete" onclick="resetFilters()">إعادة تعيين</button>
+                </div>
+            </div>
+
+            <!-- Statistics Summary -->
+            <div class="stats-summary" id="statsSummary">
+                <div class="stat-box">
+                    <div class="number" id="totalRecords">0</div>
+                    <div class="label">إجمالي السجلات</div>
+                </div>
+                <div class="stat-box present">
+                    <div class="number" id="totalPresent">0</div>
+                    <div class="label">عدد الحضور</div>
+                </div>
+                <div class="stat-box absent">
+                    <div class="number" id="totalAbsent">0</div>
+                    <div class="label">عدد الغياب</div>
+                </div>
+                <div class="stat-box">
+                    <div class="number" id="attendanceRate">0%</div>
+                    <div class="label">نسبة الحضور</div>
+                </div>
+            </div>
+
+            <!-- Alerts Section -->
+            <div class="filters-container" id="alertsSection" style="display: none;">
+                <h2 style="color: var(--error);">⚠️ تنبيهات الطلاب - الحد المسموح</h2>
+                <div id="alertsList">
+                </div>
+            </div>
+
+            <!-- Attendance Table -->
+            <div class="table-container">
+                <h2 id="tableTitle">سجل الحضور</h2>
+                <div class="export-buttons">
+                    <button class="btn-export" onclick="exportToCSV()">تصدير CSV</button>
+                    <button class="btn-export" onclick="printReport()">طباعة التقرير</button>
+                </div>
+                <table class="attendance-table">
+                    <thead>
+                        <tr>
+                            <th>التاريخ</th>
+                            <th>الاسم</th>
+                            <th>المادة</th>
+                            <th>المرحلة</th>
+                            <th>الشعبة</th>
+                            <th>المدرس/الطالب</th>
+                            <th>الوقت</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendanceTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="../Js/api-client.js"></script>
+    <script src="../Js/database.js"></script>
+    <script src="../Js/attendance-report.js"></script>
+</body>
+</html>

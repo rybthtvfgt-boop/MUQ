@@ -7,4 +7,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backend/ .
 
+RUN python manage.py collectstatic --noinput
+
 CMD ["sh", "-c", "gunicorn muq_system.wsgi:application --bind 0.0.0.0:${PORT} --workers 4"]

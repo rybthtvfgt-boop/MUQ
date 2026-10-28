@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم الطالب - نظام MUQ</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <h2>نظام MUQ</h2>
+            <nav>
+                <ul>
+                    <li><a href="#" class="active" onclick="showSection('overview')">نظرة عامة</a></li>
+                    <li><a href="#" onclick="showSection('attendance')">سجل الحضور</a></li>
+                    <li><a href="#" onclick="showSection('schedule')">جدولي</a></li>
+                    <li><a href="#" onclick="showSection('profile')">الملف الشخصي</a></li>
+                    <li><a href="attendance-report.html" target="_blank">تقرير الحضور والغياب</a></li>
+                </ul>
+            </nav>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1>لوحة تحكم الطالب</h1>
+                <div>
+                    <span id="studentName" style="margin-left: 20px; font-weight: 600;"></span>
+                    <button class="logout-btn" onclick="logout()">تسجيل الخروج</button>
+                </div>
+            </div>
+
+            <!-- Overview Section -->
+            <div id="overview" class="section">
+                <div class="cards-container">
+                    <div class="card">
+                        <h3>نسبة الحضور الكلية</h3>
+                        <div class="number" id="totalAttendance">0%</div>
+                    </div>
+                    <div class="card">
+                        <h3>أيام الحضور</h3>
+                        <div class="number" id="presentDays">0</div>
+                    </div>
+                    <div class="card">
+                        <h3>أيام الغياب</h3>
+                        <div class="number" id="absentDays">0</div>
+                    </div>
+                    <div class="card">
+                        <h3>المحاضرات هذا الأسبوع</h3>
+                        <div class="number" id="weekLectures">0</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <h3>إحصائيات الحضور الشهرية</h3>
+                    <div class="stat-chart" id="monthlyChart">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attendance Section -->
+            <div id="attendance" class="section" style="display: none;">
+                <div class="table-container">
+                    <h2>سجل الحضور</h2>
+                    <button class="btn btn-add" onclick="window.open('attendance-report.html', '_blank')">عرض تقرير مفصل</button>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>التاريخ</th>
+                                <th>المادة</th>
+                                <th>المدرس</th>
+                                <th>الوقت</th>
+                                <th>الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendanceTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Schedule Section -->
+            <div id="schedule" class="section" style="display: none;">
+                <div class="table-container">
+                    <h2>الجدول الدراسي</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>اليوم</th>
+                                <th>الوقت</th>
+                                <th>المادة</th>
+                                <th>المرحلة</th>
+                                <th>الشعبة</th>
+                                <th>المدرس</th>
+                                <th>القسم</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scheduleTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Profile Section -->
+            <div id="profile" class="section" style="display: none;">
+                <div class="table-container">
+                    <h2>الملف الشخصي</h2>
+                    <button class="btn btn-add" onclick="registerFace()">تسجيل الوجه</button>
+                    <div id="profileContent">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../Js/api-client.js"></script>
+    <script src="../Js/database.js"></script>
+    <script src="../Js/student-dashboard.js"></script>
+</body>
+</html>

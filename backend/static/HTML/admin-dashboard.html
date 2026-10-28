@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم الأدمن - نظام MUQ</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <h2>نظام MUQ</h2>
+            <nav>
+                <ul>
+                    <li><a href="#" class="active" onclick="showSection('overview')">نظرة عامة</a></li>
+                    <li><a href="#" onclick="showSection('classifications')">التصنيفات</a></li>
+                    <li><a href="#" onclick="showSection('students')">إدارة الطلاب</a></li>
+                    <li><a href="#" onclick="showSection('teachers')">إدارة المدرسين</a></li>
+                    <li><a href="#" onclick="showSection('staff')">إدارة الموظفين</a></li>
+                    <li><a href="#" onclick="showSection('schedule')">الجدول الدراسي</a></li>
+                    <li><a href="#" onclick="showSection('statistics')">الإحصائيات</a></li>
+                    <li><a href="#" onclick="showSection('portals')">حسابات البوابات</a></li>
+                    <li><a href="monitoring-system.html" target="_blank">نظام المراقبة</a></li>
+                    <li><a href="attendance-report.html" target="_blank">تقرير الحضور والغياب</a></li>
+                </ul>
+            </nav>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1>لوحة تحكم الأدمن</h1>
+                <div>
+                    <button class="btn btn-add" onclick="window.open('gate-entry.html', '_blank')">بوابة الدخول</button>
+                    <button class="btn btn-add" onclick="window.open('face-registration-new.html', '_blank')">بوابة التسجيل</button>
+                    <button class="logout-btn" onclick="logout()">تسجيل الخروج</button>
+                </div>
+            </div>
+
+            <!-- Overview Section -->
+            <div id="overview" class="section">
+                <div class="cards-container">
+                    <div class="card">
+                        <h3>عدد الطلاب</h3>
+                        <div class="number" id="totalStudents">0</div>
+                    </div>
+                    <div class="card">
+                        <h3>عدد المدرسين</h3>
+                        <div class="number" id="totalTeachers">0</div>
+                    </div>
+                    <div class="card">
+                        <h3>المحاضرات اليوم</h3>
+                        <div class="number" id="todayLectures">0</div>
+                    </div>
+                    <div class="card">
+                        <h3>نسبة الحضور</h3>
+                        <div class="number" id="attendanceRate">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Classifications Section -->
+            <div id="classifications" class="section" style="display: none;">
+                <div class="table-container">
+                    <h2>إدارة التصنيفات</h2>
+                    <div class="filter-row" style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <button class="btn btn-add" onclick="showClassificationTab('departments')">الأقسام</button>
+                        <button class="btn btn-add" onclick="showClassificationTab('stages')">المراحل</button>
+                        <button class="btn btn-add" onclick="showClassificationTab('branches')">الشعب</button>
+                    </div>
+
+                    <!-- Departments Tab -->
+                    <div id="departmentsTab" class="classification-tab">
+                        <button class="btn btn-add" onclick="openDepartmentModal()">إضافة قسم جديد</button>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>اسم القسم</th>
+                                    <th>الوصف</th>
+                                    <th>المراحل</th>
+                                    <th>عدد الطلاب</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="departmentsTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Stages Tab -->
+                    <div id="stagesTab" class="classification-tab" style="display: none;">
+                        <div class="filter-row" style="display: flex; gap: 10px; margin-bottom: 20px;">
+                            <select id="stageDepartmentFilter" onchange="loadStages()">
+                                <option value="">-- جميع الأقسام --</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-add" onclick="openStageModal()">إضافة مرحلة جديدة</button>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>اسم المرحلة</th>
+                                    <th>القسم</th>
+                                    <th>الوصف</th>
+                                    <th>عدد الشعب</th>
+                                    <th>عدد الطلاب</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stagesTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Branches Tab -->
+                    <div id="branchesTab" class="classification-tab" style="display: none;">
+                        <div class="filter-row" style="display: flex; gap: 10px; margin-bottom: 20px;">
+                            <select id="branchDepartmentFilter" onchange="loadBranches()">
+                                <option value="">-- جميع الأقسام --</option>
+                            </select>
+                            <select id="branchStageFilter" onchange="loadBranches()">
+                                <option value="">-- جميع المراحل --</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-add" onclick="openBranchModal()">إضافة شعبة جديدة</button>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>اسم الشعبة</th>
+                                    <th>القسم</th>
+                                    <th>المرحلة</th>
+                                    <th>الوصف</th>
+                                    <th>عدد الطلاب</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="branchesTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Students Section -->
+            <div id="students" class="section" style="display: none;">
+                <div class="table-container">
+                    <h2>إدارة الطلاب</h2>
+                    <button class="btn btn-add" onclick="openStudentModal()">إضافة طالب جديد</button>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>الاسم</th>
+                                <th>الرقم الجامعي</th>
+                                <th>القسم</th>
+                                <th>المرحلة</th>
+                                <th>الشعبة</th>
+                                <th>الحالة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Teachers Section -->
+            <div id="teachers" class="section" style="display: none;">
+                <div class="table-container">
+                    <h2>إدارة المدرسين</h2>
+                    <button class="btn btn-add" onclick="openTeacherModal()">إضافة مدرس جديد</button>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>الاسم</th>
+                                <th>التخصص</th>
+                                <th>المادة</th>
+                                <th>القسم</th>
+                                <th>المرحلة</th>
+                                <th>الشعبة</th>
+                                <th>البريد الإلكتروني</th>
+                                <th>الحالة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teachersTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Staff Section -->
+            <div id="staff" class="section" style="display: none;">
+                <div class="table-container">
+                    <h2>إدارة الموظفين</h2>
+                    <div class="filter-row" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <button class="btn btn-add" onclick="openStaffModal('administrative')">إضافة موظف إداري</button>
+                        <button class="btn btn-add" onclick="openStaffModal('security')">إضافة موظف أمني</button>
+                        <button class="btn btn-add" onclick="openStaffModal('service')">إضافة موظف خدمة</button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>الاسم</th>
+                                <th>النوع</th>
+                                <th>القسم</th>
+                                <th>البريد الإلكتروني</th>
+                                <th>رقم الهاتف</th>
+                                <th>الحالة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="staffTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Schedule Section -->
+            <div id="schedule" class="section" style="display: none;">
+                <div class="table-container">
+                    <h2>الجدول الدراسي</h2>
+                    <div class="filter-row" style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <select id="scheduleStageFilter" onchange="filterScheduleByStage()">
+                            <option value="">-- جميع المراحل --</option>
+                        </select>
+                        <select id="scheduleDepartmentFilter" onchange="filterScheduleByStage()">
+                            <option value="">-- جميع الأقسام --</option>
+                        </select>
+                        <button class="btn btn-add" onclick="openScheduleModal()">إضافة محاضرة</button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>اليوم</th>
+                                <th>الوقت</th>
+                                <th>المادة</th>
+                                <th>القسم</th>
+                                <th>المرحلة</th>
+                                <th>الشعبة</th>
+                                <th>المدرس</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scheduleTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Statistics Section -->
+            <div id="statistics" class="section" style="display: none;">
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <h3>إحصائيات الحضور</h3>
+                        <div class="stat-chart" id="attendanceChart">
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>أكثر الطلاب حضوراً</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>الاسم</th>
+                                    <th>نسبة الحضور</th>
+                                </tr>
+                            </thead>
+                            <tbody id="topStudentsBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- Portal Accounts Section -->
+            <div id="portals" class="section" style="display: none;">
+                <div class="table-container">
+                    <h2>حسابات بوابات الدخول والتسجيل</h2>
+                    <div class="filter-row" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <button class="btn btn-add" onclick="openPortalAccountModal('gate')">إضافة حساب بوابة دخول</button>
+                        <button class="btn btn-add" onclick="openPortalAccountModal('registration')">إضافة حساب بوابة تسجيل</button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>الاسم</th>
+                                <th>اسم المستخدم</th>
+                                <th>كلمة المرور</th>
+                                <th>البوابة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="portalAccountsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Portal Account Modal -->
+    <div id="portalAccountModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="portalAccountModalTitle">إضافة حساب بوابة</h2>
+                <button class="close-modal" onclick="closePortalAccountModal()">&times;</button>
+            </div>
+            <form id="portalAccountForm">
+                <input type="hidden" id="portalAccountId">
+                <div class="form-group">
+                    <label for="portalAccountType">البوابة</label>
+                    <select id="portalAccountType" required>
+                        <option value="gate">بوابة الدخول</option>
+                        <option value="registration">بوابة التسجيل</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="portalAccountName">اسم الموظف</label>
+                    <input type="text" id="portalAccountName" required>
+                </div>
+                <div class="form-group">
+                    <label for="portalAccountUsername">اسم المستخدم</label>
+                    <input type="text" id="portalAccountUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="portalAccountPassword">كلمة المرور</label>
+                    <input type="text" id="portalAccountPassword" required>
+                </div>
+                <button type="submit" class="btn-primary">حفظ</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Student Modal -->
+    <div id="studentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="studentModalTitle">إضافة طالب جديد</h2>
+                <button class="close-modal" onclick="closeStudentModal()">&times;</button>
+            </div>
+            <form id="studentForm">
+                <input type="hidden" id="studentId">
+                <div class="form-group">
+                    <label for="studentName">الاسم الكامل</label>
+                    <input type="text" id="studentName" required>
+                </div>
+                <div class="form-group">
+                    <label for="studentIdNumber">الرقم الجامعي</label>
+                    <input type="text" id="studentIdNumber" required>
+                </div>
+                <div class="form-group">
+                    <label for="studentDepartment">القسم</label>
+                    <select id="studentDepartment" required>
+                        <option value="">-- اختر القسم --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="studentStage">المرحلة</label>
+                    <select id="studentStage" required>
+                        <option value="">-- اختر المرحلة --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="studentBranch">الشعبة</label>
+                    <input type="text" id="studentBranch" placeholder="اسم الشعبة (مثال: 1، 2، أ، ب)" required>
+                </div>
+                <div class="form-group">
+                    <label for="studentEmail">البريد الإلكتروني</label>
+                    <input type="email" id="studentEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="studentPhone">رقم الهاتف</label>
+                    <input type="tel" id="studentPhone" required>
+                </div>
+                <div class="form-group">
+                    <label for="studentUsername">اسم المستخدم</label>
+                    <input type="text" id="studentUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="studentPassword">كلمة المرور</label>
+                    <input type="password" id="studentPassword" required>
+                </div>
+                <button type="submit" class="btn-primary">حفظ</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Teacher Modal -->
+    <div id="teacherModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="teacherModalTitle">إضافة مدرس جديد</h2>
+                <button class="close-modal" onclick="closeTeacherModal()">&times;</button>
+            </div>
+            <form id="teacherForm">
+                <input type="hidden" id="teacherId">
+                <div class="form-group">
+                    <label for="teacherName">الاسم الكامل</label>
+                    <input type="text" id="teacherName" required>
+                </div>
+                <div class="form-group">
+                    <label for="teacherSpecialization">التخصص</label>
+                    <input type="text" id="teacherSpecialization" required>
+                </div>
+                <div class="form-group">
+                    <label for="teacherSubject">المادة التي يدرسها</label>
+                    <input type="text" id="teacherSubject" required>
+                </div>
+                <div class="form-group">
+                    <label for="teacherDepartment">القسم</label>
+                    <select id="teacherDepartment" required>
+                        <option value="">-- اختر القسم --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="teacherStage">المرحلة التي يدرسها</label>
+                    <select id="teacherStage" required>
+                        <option value="">-- اختر المرحلة --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="teacherBranch">الشعبة التي يدرسها</label>
+                    <input type="text" id="teacherBranch" placeholder="اترك فارغاً للكل أو اكتب اسم الشعبة">
+                </div>
+                <div class="form-group">
+                    <label for="teacherEmail">البريد الإلكتروني</label>
+                    <input type="email" id="teacherEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="teacherPhone">رقم الهاتف</label>
+                    <input type="tel" id="teacherPhone" required>
+                </div>
+                <div class="form-group">
+                    <label for="teacherUsername">اسم المستخدم</label>
+                    <input type="text" id="teacherUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="teacherPassword">كلمة المرور</label>
+                    <input type="password" id="teacherPassword" required>
+                </div>
+                <button type="submit" class="btn-primary">حفظ</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Schedule Modal -->
+    <div id="scheduleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="scheduleModalTitle">إضافة محاضرة</h2>
+                <button class="close-modal" onclick="closeScheduleModal()">&times;</button>
+            </div>
+            <form id="scheduleForm">
+                <input type="hidden" id="scheduleId">
+                <div class="form-group">
+                    <label for="scheduleDay">اليوم</label>
+                    <select id="scheduleDay" required>
+                        <option value="الأحد">الأحد</option>
+                        <option value="الإثنين">الإثنين</option>
+                        <option value="الثلاثاء">الثلاثاء</option>
+                        <option value="الأربعاء">الأربعاء</option>
+                        <option value="الخميس">الخميس</option>
+                        <option value="الجمعة">الجمعة</option>
+                        <option value="السبت">السبت</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="scheduleTime">الوقت</label>
+                    <input type="time" id="scheduleTime" required>
+                </div>
+                <div class="form-group">
+                    <label for="scheduleSubject">المادة</label>
+                    <input type="text" id="scheduleSubject" required onchange="updateTeacherSelect()">
+                </div>
+                <div class="form-group">
+                    <label for="scheduleDepartment">القسم</label>
+                    <select id="scheduleDepartment" required onchange="updateTeacherSelect()">
+                        <option value="">-- اختر القسم --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="scheduleStage">المرحلة</label>
+                    <select id="scheduleStage" required onchange="updateTeacherSelect()">
+                        <option value="">-- اختر المرحلة --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="scheduleBranch">الشعبة</label>
+                    <input type="text" id="scheduleBranch" placeholder="اترك فارغاً للكل أو اكتب اسم الشعبة" onchange="updateTeacherSelect()">
+                </div>
+                <div class="form-group">
+                    <label for="scheduleTeacher">المدرس</label>
+                    <select id="scheduleTeacher" required>
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary">حفظ</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Staff Modal -->
+    <div id="staffModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="staffModalTitle">إضافة موظف</h2>
+                <button class="close-modal" onclick="closeStaffModal()">&times;</button>
+            </div>
+            <form id="staffForm">
+                <input type="hidden" id="staffId">
+                <input type="hidden" id="staffType">
+                <div class="form-group">
+                    <label for="staffName">الاسم الكامل</label>
+                    <input type="text" id="staffName" required>
+                </div>
+                <div class="form-group">
+                    <label for="staffDepartment">القسم</label>
+                    <select id="staffDepartment" required>
+                        <option value="">-- اختر القسم --</option>
+                        <option value="استعلامات">استعلامات</option>
+                        <option value="أمن ومراقبة">أمن ومراقبة</option>
+                        <option value="حراسة">حراسة</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="staffPosition">المسمى الوظيفي</label>
+                    <input type="text" id="staffPosition" required>
+                </div>
+                <div class="form-group">
+                    <label for="staffEmail">البريد الإلكتروني</label>
+                    <input type="email" id="staffEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="staffPhone">رقم الهاتف</label>
+                    <input type="tel" id="staffPhone" required>
+                </div>
+                <div class="form-group">
+                    <label for="staffUsername">اسم المستخدم</label>
+                    <input type="text" id="staffUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="staffPassword">كلمة المرور</label>
+                    <input type="password" id="staffPassword" required>
+                </div>
+                <button type="submit" class="btn-primary">حفظ</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Department Modal -->
+    <div id="departmentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="departmentModalTitle">إضافة قسم</h2>
+                <button class="close-modal" onclick="closeDepartmentModal()">&times;</button>
+            </div>
+            <form id="departmentForm">
+                <input type="hidden" id="departmentId">
+                <div class="form-group">
+                    <label for="departmentName">اسم القسم</label>
+                    <input type="text" id="departmentName" required>
+                </div>
+                <div class="form-group">
+                    <label for="departmentDescription">الوصف</label>
+                    <textarea id="departmentDescription" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>اختر المراحل (اختر 4 مراحل)</label>
+                    <div id="departmentStagesSelection" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px;">
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary">حفظ</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Stage Modal -->
+    <div id="stageModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="stageModalTitle">إضافة مرحلة</h2>
+                <button class="close-modal" onclick="closeStageModal()">&times;</button>
+            </div>
+            <form id="stageForm">
+                <input type="hidden" id="stageId">
+                <div class="form-group">
+                    <label for="stageDepartment">القسم</label>
+                    <select id="stageDepartment" required>
+                        <option value="">-- اختر القسم --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="stageName">اسم المرحلة</label>
+                    <input type="text" id="stageName" required>
+                </div>
+                <div class="form-group">
+                    <label for="stageDescription">الوصف</label>
+                    <textarea id="stageDescription" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn-primary">حفظ</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Branch Modal -->
+    <div id="branchModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="branchModalTitle">إضافة شعبة</h2>
+                <button class="close-modal" onclick="closeBranchModal()">&times;</button>
+            </div>
+            <form id="branchForm">
+                <input type="hidden" id="branchId">
+                <div class="form-group">
+                    <label for="branchDepartment">القسم</label>
+                    <select id="branchDepartment" required onchange="updateBranchStageOptions()">
+                        <option value="">-- اختر القسم --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="branchStage">المرحلة</label>
+                    <select id="branchStage" required>
+                        <option value="">-- اختر المرحلة --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="branchName">اسم الشعبة</label>
+                    <input type="text" id="branchName" placeholder="مثال: 1، 2، أ، ب، علمي، أدبي" required>
+                </div>
+                <div class="form-group">
+                    <label for="branchDescription">الوصف</label>
+                    <textarea id="branchDescription" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn-primary">حفظ</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="../Js/api-client.js"></script>
+    <script src="../Js/database.js"></script>
+    <script src="../Js/admin-dashboard.js"></script>
+</body>
+</html>

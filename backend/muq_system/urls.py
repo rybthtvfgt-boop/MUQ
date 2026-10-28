@@ -1,7 +1,9 @@
 from django.contrib import admin
 from django.http import JsonResponse
 from django.urls import include, path
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
+from django.conf import settings
+from django.conf.urls.static import static
 
 from users.views import (
     login_template_view, logout_template_view,
@@ -23,6 +25,11 @@ def registration_dashboard(request):
     return redirect('admin_dashboard')
 
 
+def frontend_index(request):
+    """Serve the frontend index.html"""
+    return render(request, 'index.html')
+
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/health/', health_check),
@@ -30,6 +37,9 @@ urlpatterns = [
     path('api/', include('departments.urls')),
     path('api/', include('attendance.urls')),
     path('api/monitoring/', include('monitoring.urls')),
+
+    # Frontend
+    path('app/', frontend_index, name='frontend'),
 
     # Template views
     path('', login_template_view, name='login'),
@@ -41,3 +51,6 @@ urlpatterns = [
     path('gate-dashboard/', gate_dashboard, name='gate_dashboard'),
     path('registration-dashboard/', registration_dashboard, name='registration_dashboard'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

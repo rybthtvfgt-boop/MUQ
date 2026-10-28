@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الوجه - نظام MUQ</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .face-registration-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .camera-container {
+            position: relative;
+            width: 100%;
+            max-width: 640px;
+            margin: 0 auto;
+        }
+
+        #videoElement {
+            width: 100%;
+            border-radius: 10px;
+            border: 3px solid var(--primary-orange);
+        }
+
+        .face-frame {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            border: 3px solid var(--primary-orange);
+            border-radius: 50%;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(255, 107, 53, 0.3);
+        }
+
+        .face-frame.valid {
+            border-color: var(--success);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+
+        .face-frame.invalid {
+            border-color: var(--error);
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+        }
+
+        .face-frame.too-close {
+            border-color: var(--error);
+            border-width: 5px;
+            animation: pulse-red 0.5s infinite;
+        }
+
+        .face-frame.too-far {
+            border-color: #ffff00;
+            border-width: 5px;
+            animation: pulse-yellow 0.5s infinite;
+        }
+
+        .face-frame.move-right {
+            border-color: #00bfff;
+            animation: slide-right 0.5s infinite;
+        }
+
+        .face-frame.move-left {
+            border-color: #00bfff;
+            animation: slide-left 0.5s infinite;
+        }
+
+        @keyframes pulse-red {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes pulse-yellow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes slide-right {
+            0%, 100% { transform: translate(-50%, -50%); }
+            50% { transform: translate(-40%, -50%); }
+        }
+
+        @keyframes slide-left {
+            0%, 100% { transform: translate(-50%, -50%); }
+            50% { transform: translate(-60%, -50%); }
+        }
+
+        .progress-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: var(--card-bg);
+            border-radius: 10px;
+            border: 1px solid var(--primary-orange);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: var(--dark-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--brand-gradient);
+            transition: width 0.3s ease;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 10px;
+            background: var(--dark-bg);
+            border-radius: 5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-orange);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .current-pose {
+            text-align: center;
+            font-size: 18px;
+            color: var(--primary-orange);
+            margin: 10px 0;
+            padding: 10px;
+            background: var(--dark-bg);
+            border-radius: 5px;
+        }
+
+        .quality-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .quality-bar {
+            width: 100px;
+            height: 10px;
+            background: var(--dark-bg);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .quality-fill {
+            height: 100%;
+            background: var(--success);
+            transition: width 0.3s ease;
+        }
+
+        .pose-checklist {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            margin: 10px 0;
+        }
+
+        .pose-item {
+            text-align: center;
+            padding: 5px;
+            background: var(--dark-bg);
+            border-radius: 5px;
+            font-size: 12px;
+        }
+
+        .pose-item.completed {
+            background: var(--success);
+            color: #000;
+        }
+
+        .pose-item.pending {
+            background: var(--dark-bg);
+            color: #888;
+        }
+
+        .pose-item.current {
+            background: var(--primary-orange);
+            color: #fff;
+        }
+
+        .message-box {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .message-box.success {
+            background: var(--success);
+            color: #000;
+        }
+
+        .message-box.error {
+            background: var(--error);
+            color: #fff;
+        }
+
+        .message-box.info {
+            background: var(--dark-bg);
+            color: #fff;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--brand-gradient);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--dark-bg);
+            color: #fff;
+            border: 1px solid var(--primary-orange);
+        }
+
+        .btn-secondary:hover {
+            background: var(--card-bg);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .liveness-challenge {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            background: var(--dark-bg);
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .liveness-challenge.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .pose-checklist {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+    <script src="../Js/portal-auth.js"></script>
+    <script>requirePortalAccess('registration', { allowSelfRegistration: true });</script>
+</head>
+<body>
+    <div class="face-registration-container">
+        <h1 id="personName">تسجيل الوجه</h1>
+
+        <div class="camera-container">
+            <video id="videoElement" autoplay playsinline></video>
+            <div id="faceFrame" class="face-frame"></div>
+            <div id="guidanceOverlay" style="position: absolute; top: 10px; left: 10px; right: 10px; background: rgba(0,0,0,0.7); color: #fff; padding: 10px; border-radius: 5px; text-align: center; font-size: 14px; display: none;">
+                <div id="guidanceText"></div>
+            </div>
+        </div>
+
+        <div class="progress-section">
+            <div class="current-pose" id="currentPose">اضغط "بدء تسجيل الوجه" للبدء</div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalSamples">0</div>
+                    <div class="stat-label">إجمالي العينات</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="acceptedSamples">0</div>
+                    <div class="stat-label">مقبولة</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="rejectedSamples">0</div>
+                    <div class="stat-label">مرفوضة</div>
+                </div>
+            </div>
+
+            <div class="quality-indicator">
+                <span>الجودة:</span>
+                <div class="quality-bar">
+                    <div class="quality-fill" id="qualityFill" style="width: 0%"></div>
+                </div>
+                <span id="qualityValue">0%</span>
+            </div>
+
+            <div class="pose-checklist" id="poseChecklist">
+                <div class="pose-item pending" data-pose="front">أمام</div>
+                <div class="pose-item pending" data-pose="right_15">يمين 15°</div>
+                <div class="pose-item pending" data-pose="right_30">يمين 30°</div>
+                <div class="pose-item pending" data-pose="left_15">يسار 15°</div>
+                <div class="pose-item pending" data-pose="left_30">يسار 30°</div>
+                <div class="pose-item pending" data-pose="up">أعلى</div>
+                <div class="pose-item pending" data-pose="down">أسفل</div>
+                <div class="pose-item pending" data-pose="unknown">طبيعي</div>
+            </div>
+
+            <div class="message-box info" id="messageBox">
+                يرجى التأكد من إضاءة جيدة ووجه واضح
+            </div>
+        </div>
+
+        <div class="liveness-challenge" id="livenessChallenge">
+            <h2>تحدي التحقق الحيوي</h2>
+            <p>رمش عينيك الآن للتحقق من أنك شخص حقيقي</p>
+            <p id="blinkStatus">في انتظار الرمش...</p>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-primary" id="startBtn" onclick="startRegistration()">بدء تسجيل الوجه</button>
+            <button class="btn btn-secondary" id="stopBtn" onclick="stopRegistration()" style="display: none;">إيقاف التسجيل</button>
+            <button class="btn btn-secondary" id="saveBtn" onclick="saveFaceData()" style="display: none;">حفظ البيانات</button>
+            <button class="btn btn-secondary" onclick="goBack()">رجوع</button>
+        </div>
+    </div>
+
+    <script src="../Js/api-client.js"></script>
+    <script src="../Js/database.js"></script>
+    <script src="../Js/face-config.js"></script>
+    <script src="../vendor/face-api/face-api.min.js"></script>
+    <script src="../Js/face-recognition-engine.js"></script>
+    <script src="../Js/face-storage.js"></script>
+    <script src="../Js/face-registration-new.js"></script>
+</body>
+</html>
