@@ -1,0 +1,97 @@
+{
+  "start_time": "2026-10-23T09:43:44.569901",
+  "logs": [
+    {
+      "timestamp": "2026-10-23T09:43:44.491108",
+      "level": "info",
+      "message": "Setting up AI capabilities...",
+      "data": {}
+    },
+    {
+      "timestamp": "2026-10-23T09:43:44.549350",
+      "level": "info",
+      "message": "Setting up YOLO for object detection...",
+      "data": {}
+    },
+    {
+      "timestamp": "2026-10-23T09:43:44.557904",
+      "level": "warning",
+      "message": "YOLO not installed. Install with: pip install ultralytics",
+      "data": {}
+    },
+    {
+      "timestamp": "2026-10-23T09:43:44.562400",
+      "level": "info",
+      "message": "Setting up face recognition...",
+      "data": {}
+    },
+    {
+      "timestamp": "2026-10-23T09:43:44.566008",
+      "level": "warning",
+      "message": "Face recognition not installed. Install with: pip install face-recognition",
+      "data": {}
+    },
+    {
+      "timestamp": "2026-10-23T09:43:44.568253",
+      "level": "info",
+      "message": "Starting main model training...",
+      "data": {}
+    },
+    {
+      "timestamp": "2026-10-23T09:43:44.569930",
+      "level": "info",
+      "message": "Training started",
+      "data": {
+        "timestamp": "2026-10-23T09:43:44.569901",
+        "dataset_path": "F:\\MUQ\\dataset",
+        "img_size": [
+          600,
+          600
+        ],
+        "batch_size": 16,
+        "epochs": 100
+      }
+    },
+    {
+      "timestamp": "2026-10-23T09:43:44.571962",
+      "level": "info",
+      "message": "Loading dataset...",
+      "data": {}
+    },
+    {
+      "timestamp": "2026-10-23T09:43:45.040227",
+      "level": "info",
+      "message": "Dataset loaded",
+      "data": {
+        "num_classes": 2,
+        "classes": {
+          "notsmoking": 0,
+          "smoking": 1
+        },
+        "train_samples": 1610,
+        "validation_samples": 400
+      }
+    },
+    {
+      "timestamp": "2026-10-23T09:43:45.042741",
+      "level": "info",
+      "message": "Building model with EfficientNetB0...",
+      "data": {}
+    },
+    {
+      "timestamp": "2026-10-23T09:44:13.815970",
+      "level": "info",
+      "message": "Model built",
+      "data": {
+        "total_params": 67426841,
+        "trainable_params": 3320450
+      }
+    },
+    {
+      "timestamp": "2026-10-23T09:44:13.866470",
+      "level": "info",
+      "message": "Phase 1: Training with frozen base model...",
+      "data": {}
+    }
+  ]
+}
