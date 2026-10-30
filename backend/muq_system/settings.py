@@ -29,10 +29,10 @@ DEBUG = env_bool('DEBUG', False)
 
 SECRET_KEY = os.environ.get('SECRET_KEY', '')
 if not SECRET_KEY:
-    # Temporary fallback for collectstatic - should be set in env vars
-    SECRET_KEY = 'django-insecure-build-time-fallback'
+    import secrets
+    SECRET_KEY = secrets.token_urlsafe(50)
 
-ALLOWED_HOSTS = env_list('ALLOWED_HOSTS', 'localhost,127.0.0.1' if DEBUG else '.railway.app,.vercel.app')
+ALLOWED_HOSTS = env_list('ALLOWED_HOSTS', '*')
 if not ALLOWED_HOSTS:
     ALLOWED_HOSTS = ['*']
 
