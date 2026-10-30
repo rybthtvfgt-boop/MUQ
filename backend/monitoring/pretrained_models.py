@@ -59,7 +59,6 @@ def get_exam_monitoring_model():
         _loaded_models[model_name] = model
         return model
     except Exception as e:
-        print(f"Error loading model: {e}")
         return None
 
 def get_smoking_detection_model():
@@ -78,7 +77,6 @@ def get_smoking_detection_model():
         _loaded_models[model_name] = model
         return model
     except Exception as e:
-        print(f"Error loading model: {e}")
         return None
 
 def get_danger_detection_model():
@@ -105,7 +103,6 @@ def get_danger_detection_model():
         _loaded_models[model_name] = model
         return model
     except Exception as e:
-        print(f"Error loading model: {e}")
         return None
 
 def get_critical_danger_model():
@@ -132,7 +129,6 @@ def get_critical_danger_model():
         _loaded_models[model_name] = model
         return model
     except Exception as e:
-        print(f"Error loading model: {e}")
         return None
 
 def detect_exam_cheating(image_path_or_array):
