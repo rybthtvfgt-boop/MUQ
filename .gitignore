@@ -10,6 +10,9 @@ backend/*.db
 backend/media/uploads/
 backend/staticfiles/
 backend/.env
+backend/Lib/
+backend/include/
+backend/Scripts/
 
 # Frontend
 frontend/.DS_Store

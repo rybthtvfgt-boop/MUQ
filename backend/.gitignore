@@ -25,6 +25,9 @@ venv/
 env/
 ENV/
 .venv
+Lib/
+include/
+Scripts/
 
 # Django
 *.log
@@ -50,3 +53,4 @@ Thumbs.db
 
 # Railway
 railway-up.json
+railway.json
