@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام MUQ - تسجيل الحضور بالتعرف على الوجوه</title>
+    <title>MUQ AI | نظام المراقبة الذكي</title>
     <link rel="stylesheet" href="/static/css/style.css">
     <style>
         .landing-container {
@@ -13,7 +13,7 @@
             justify-content: center;
             min-height: 100vh;
             text-align: center;
-            padding: 60px 20px;
+            padding: 80px 20px;
             position: relative;
             overflow: hidden;
         }
@@ -21,81 +21,213 @@
         .landing-container::before {
             content: '';
             position: absolute;
-            width: 700px;
-            height: 700px;
+            width: 800px;
+            height: 800px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(255, 107, 53, 0.14), transparent 65%);
-            top: -350px;
-            right: -150px;
+            background: var(--brand-gradient);
+            opacity: 0.08;
+            top: -400px;
+            right: -200px;
+            animation: gradient-shift 20s ease infinite;
+            pointer-events: none;
+        }
+
+        .landing-container::after {
+            content: '';
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: var(--brand-gradient-alt);
+            opacity: 0.06;
+            bottom: -300px;
+            left: -150px;
+            animation: gradient-shift 25s ease infinite reverse;
             pointer-events: none;
         }
 
         .landing-badge {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            padding: 8px 18px;
+            gap: 10px;
+            padding: 10px 24px;
             border-radius: 99px;
-            border: 1px solid rgba(255, 107, 53, 0.35);
-            background: rgba(255, 107, 53, 0.08);
-            color: var(--secondary-orange);
+            border: 1px solid var(--border-glow);
+            background: var(--card-bg-glass);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            color: var(--text-primary);
             font-size: 0.95em;
-            font-weight: 600;
-            margin-bottom: 28px;
-            animation: fadeIn 0.6s ease-out both;
+            font-weight: 700;
+            margin-bottom: 35px;
+            animation: fadeIn 0.8s ease-out both;
+            box-shadow: var(--shadow-glow);
         }
 
         .landing-badge::before {
             content: '';
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
-            background: var(--primary-orange);
-            box-shadow: 0 0 10px var(--brand-glow);
+            background: var(--brand-gradient);
+            box-shadow: var(--shadow-glow);
+            animation: pulse-glow 2s infinite;
         }
 
         .landing-container h1 {
-            font-size: clamp(2.6em, 6vw, 4.2em);
+            font-size: clamp(3em, 7vw, 5em);
             color: #fff;
-            margin-bottom: 18px;
+            margin-bottom: 25px;
             font-weight: 900;
-            letter-spacing: 1px;
-            line-height: 1.2;
-            animation: fadeIn 0.6s ease-out 0.1s both;
+            letter-spacing: 2px;
+            line-height: 1.1;
+            animation: fadeIn 0.8s ease-out 0.1s both;
         }
 
         .landing-container h1 span {
-            background: linear-gradient(135deg, var(--primary-orange) 0%, #ffb35c 100%);
+            background: var(--brand-gradient);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
             color: transparent;
+            background-size: 200% 200%;
+            animation: gradient-shift 5s ease infinite;
         }
 
         .landing-container > p {
-            font-size: 1.25em;
+            font-size: 1.4em;
             color: var(--text-secondary);
-            margin-bottom: 40px;
-            max-width: 640px;
-            font-weight: 400;
-            animation: fadeIn 0.6s ease-out 0.2s both;
+            margin-bottom: 50px;
+            max-width: 700px;
+            font-weight: 500;
+            line-height: 1.8;
+            animation: fadeIn 0.8s ease-out 0.2s both;
         }
 
         .landing-actions {
             display: flex;
-            gap: 16px;
+            gap: 20px;
             flex-wrap: wrap;
             justify-content: center;
-            animation: fadeIn 0.6s ease-out 0.3s both;
+            animation: fadeIn 0.8s ease-out 0.3s both;
         }
 
         .landing-actions .btn-primary {
             width: auto;
-            min-width: 280px;
-            font-size: 1.15em;
-            padding: 16px 44px;
+            min-width: 300px;
+            font-size: 1.2em;
+            padding: 18px 50px;
             border-radius: 99px;
-            box-shadow: 0 10px 32px rgba(255, 107, 53, 0.4);
+            box-shadow: var(--shadow-glow-strong);
+            background: var(--brand-gradient);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .landing-actions .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left var(--transition-slow);
+        }
+
+        .landing-actions .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .landing-actions .btn-secondary {
+            width: auto;
+            min-width: 300px;
+            font-size: 1.2em;
+            padding: 18px 50px;
+            border-radius: 99px;
+            background: var(--card-bg-glass);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .landing-actions .btn-secondary:hover {
+            border-color: var(--border-glow);
+            box-shadow: var(--shadow-glow);
+            transform: translateY(-2px);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 80px;
+            max-width: 1200px;
+            width: 100%;
+            animation: fadeIn 0.8s ease-out 0.4s both;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            padding: 35px;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            transition: all var(--transition-normal);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-glow);
+            border-color: var(--border-glow);
+        }
+
+        .feature-icon {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-lg);
+            background: var(--elevated-bg);
+            border: 2px solid var(--border-color);
+        }
+
+        .feature-icon svg {
+            width: 35px;
+            height: 35px;
+            stroke: var(--text-primary);
+            fill: none;
+            stroke-width: 2;
+        }
+
+        .feature-card h3 {
+            color: var(--text-primary);
+            font-size: 1.4em;
+            margin-bottom: 15px;
+            font-weight: 800;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 1em;
+            line-height: 1.7;
         }
 
         .landing-actions .btn-ghost {
