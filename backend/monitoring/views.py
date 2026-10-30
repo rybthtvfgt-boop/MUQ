@@ -465,3 +465,37 @@ def get_alerts(request):
         return Response({
             'error': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_training_history(request):
+    """Get training session history"""
+    try:
+        from django.utils import timezone
+        from datetime import timedelta
+
+        # Get last 10 training sessions
+        sessions = TrainingSession.objects.all().order_by('-started_at')[:10]
+
+        history = []
+        for session in sessions:
+            history.append({
+                'id': session.id,
+                'model_name': session.model.name if session.model else 'Unknown',
+                'status': session.status,
+                'progress': session.progress,
+                'current_stage': session.current_stage,
+                'started_at': session.started_at.isoformat() if session.started_at else None,
+                'completed_at': session.completed_at.isoformat() if session.completed_at else None,
+                'error_message': session.error_message
+            })
+
+        return Response({
+            'history': history,
+            'total': len(history)
+        })
+    except Exception as e:
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

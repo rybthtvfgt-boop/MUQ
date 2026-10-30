@@ -85,7 +85,7 @@
 
         .stats-bar {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
@@ -596,6 +596,108 @@
                 padding: 25px;
             }
         }
+
+        /* Training History Section */
+        .training-history-section {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: var(--radius-lg);
+            border: 2px solid var(--border-strong);
+            box-shadow: var(--shadow-md);
+            margin-bottom: 30px;
+        }
+
+        .training-history-section h2 {
+            color: var(--text-primary);
+            font-size: 1.8em;
+            margin-bottom: 25px;
+            font-weight: 700;
+        }
+
+        .training-history-item {
+            background: var(--elevated-bg);
+            padding: 20px;
+            border-radius: var(--radius-md);
+            margin-bottom: 15px;
+            border-right: 4px solid var(--primary-orange);
+            transition: all 0.3s ease;
+        }
+
+        .training-history-item:hover {
+            transform: translateX(-5px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .training-history-item.completed {
+            border-right-color: var(--success);
+        }
+
+        .training-history-item.failed {
+            border-right-color: var(--error);
+        }
+
+        .training-history-item.running {
+            border-right-color: var(--info);
+        }
+
+        .training-history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .training-history-name {
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 1.1em;
+        }
+
+        .training-history-status {
+            padding: 5px 15px;
+            border-radius: var(--radius-sm);
+            font-size: 0.85em;
+            font-weight: 700;
+        }
+
+        .training-history-status.completed {
+            background: var(--success);
+            color: #000;
+        }
+
+        .training-history-status.failed {
+            background: var(--error);
+            color: #fff;
+        }
+
+        .training-history-status.running {
+            background: var(--info);
+            color: #fff;
+        }
+
+        .training-history-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .training-history-detail {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .training-history-detail span {
+            color: var(--primary-orange);
+            font-weight: 600;
+        }
+
+        .no-data {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 40px;
+            font-size: 1.1em;
+        }
     </style>
 </head>
 <body>
@@ -639,6 +741,10 @@
             <div class="stat-item">
                 <div class="stat-value" id="totalDetections">0</div>
                 <div class="stat-label">إجمالي الكشف</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="trainedModels">0</div>
+                <div class="stat-label">النماذج المُدرّبة</div>
             </div>
         </div>
 
@@ -685,6 +791,14 @@
                 <h3>مراقبة الحالات الحرجة</h3>
                 <p>كشف المشاجرات، الحريق، الانفجارات، والشغب</p>
                 <div class="status inactive">غير نشط</div>
+            </div>
+        </div>
+
+        <!-- Training History Section -->
+        <div class="training-history-section">
+            <h2>سجل التدريب</h2>
+            <div id="trainingHistoryList">
+                <div class="no-data">لا توجد جلسات تدريب سابقة</div>
             </div>
         </div>
     </div>
@@ -1195,6 +1309,7 @@
                     const alertsTodayEl = document.getElementById('alertsToday');
                     const totalDetectionsEl = document.getElementById('totalDetections');
                     const modelAccuracyEl = document.getElementById('modelAccuracy');
+                    const trainedModelsEl = document.getElementById('trainedModels');
 
                     if (activeCamerasEl) activeCamerasEl.textContent = data.active_cameras || 0;
                     if (alertsTodayEl) alertsTodayEl.textContent = data.alerts_today || 0;
@@ -1207,6 +1322,7 @@
                             modelAccuracyEl.textContent = '--';
                         }
                     }
+                    if (trainedModelsEl) trainedModelsEl.textContent = data.trained_models || 0;
                 }
             } catch (error) {
                 console.error('Failed to update stats:', error);
@@ -1247,11 +1363,61 @@
             }
         }
 
+        // Load training history
+        async function loadTrainingHistory() {
+            try {
+                const response = await api.request('/api/monitoring/training/history/');
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const historyList = document.getElementById('trainingHistoryList');
+
+                    if (historyList) {
+                        if (data.history && data.history.length > 0) {
+                            historyList.innerHTML = '';
+
+                            data.history.forEach(session => {
+                                const statusClass = session.status;
+                                const statusText = session.status === 'completed' ? 'مكتمل' :
+                                                  session.status === 'failed' ? 'فشل' :
+                                                  session.status === 'running' ? 'جاري' : session.status;
+
+                                const startedAt = session.started_at ? new Date(session.started_at).toLocaleString('ar-SA') : '--';
+                                const completedAt = session.completed_at ? new Date(session.completed_at).toLocaleString('ar-SA') : '--';
+
+                                const historyItem = document.createElement('div');
+                                historyItem.className = `training-history-item ${statusClass}`;
+                                historyItem.innerHTML = `
+                                    <div class="training-history-header">
+                                        <div class="training-history-name">${session.model_name}</div>
+                                        <div class="training-history-status ${statusClass}">${statusText}</div>
+                                    </div>
+                                    <div class="training-history-details">
+                                        <div class="training-history-detail">التقدم: <span>${session.progress}%</span></div>
+                                        <div class="training-history-detail">بدأ: <span>${startedAt}</span></div>
+                                        <div class="training-history-detail">انتهى: <span>${completedAt}</span></div>
+                                        <div class="training-history-detail">المرحلة: <span>${session.current_stage || '--'}</span></div>
+                                    </div>
+                                `;
+                                historyList.appendChild(historyItem);
+                            });
+                        } else {
+                            historyList.innerHTML = '<div class="no-data">لا توجد جلسات تدريب سابقة</div>';
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load training history:', error);
+            }
+        }
+
         // Initialize
         updateStats();
         loadAlertsFromDatabase();
+        loadTrainingHistory();
         setInterval(updateStats, 10000); // Update every 10 seconds
         setInterval(loadAlertsFromDatabase, 30000); // Load alerts every 30 seconds
+        setInterval(loadTrainingHistory, 60000); // Load training history every minute
     </script>
 </body>
 </html>
