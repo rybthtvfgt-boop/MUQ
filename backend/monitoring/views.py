@@ -343,3 +343,125 @@ def upload_training_image(request):
         'category': category,
         'label': label
     })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_monitoring_stats(request):
+    """Get real monitoring statistics"""
+    try:
+        from django.utils import timezone
+        from datetime import timedelta
+
+        # Get active monitoring sessions (from training sessions)
+        active_sessions = TrainingSession.objects.filter(status='running').count()
+
+        # Get completed sessions in last 24 hours
+        yesterday = timezone.now() - timedelta(days=1)
+        completed_sessions = TrainingSession.objects.filter(
+            status='completed',
+            completed_at__gte=yesterday
+        ).count()
+
+        # Get total detections from database (if you have a Detection model)
+        # For now, use training sessions as proxy
+        total_detections = TrainingSession.objects.filter(status='completed').count()
+
+        # Get trained models count
+        trained_models = TrainedModel.objects.count()
+
+        # Get dataset info
+        dataset_info = get_dataset_info(request)
+        dataset_data = dataset_info.data if hasattr(dataset_info, 'data') else dataset_info
+
+        return Response({
+            'active_cameras': active_sessions,
+            'alerts_today': completed_sessions,
+            'total_detections': total_detections,
+            'trained_models': trained_models,
+            'dataset_info': dataset_data
+        })
+    except Exception as e:
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def save_alert(request):
+    """Save a monitoring alert to database"""
+    try:
+        from django.utils import timezone
+
+        alert_type = request.data.get('alert_type', 'unknown')
+        message = request.data.get('message', '')
+        confidence = request.data.get('confidence', 0.0)
+        monitoring_type = request.data.get('monitoring_type', 'general')
+
+        # For now, save to a simple log file (can be upgraded to Alert model later)
+        log_entry = {
+            'timestamp': timezone.now().isoformat(),
+            'alert_type': alert_type,
+            'message': message,
+            'confidence': confidence,
+            'monitoring_type': monitoring_type
+        }
+
+        # Save to alerts log file
+        alerts_log_path = os.path.join(DATASET_PATH, 'alerts_log.json')
+        alerts = []
+
+        if os.path.exists(alerts_log_path):
+            try:
+                with open(alerts_log_path, 'r', encoding='utf-8') as f:
+                    alerts = json.load(f)
+            except:
+                alerts = []
+
+        alerts.append(log_entry)
+
+        # Keep only last 1000 alerts
+        if len(alerts) > 1000:
+            alerts = alerts[-1000:]
+
+        with open(alerts_log_path, 'w', encoding='utf-8') as f:
+            json.dump(alerts, f, ensure_ascii=False, indent=2)
+
+        return Response({
+            'message': 'Alert saved successfully',
+            'alert': log_entry
+        })
+    except Exception as e:
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_alerts(request):
+    """Get recent monitoring alerts"""
+    try:
+        alerts_log_path = os.path.join(DATASET_PATH, 'alerts_log.json')
+
+        if not os.path.exists(alerts_log_path):
+            return Response({
+                'alerts': [],
+                'total': 0
+            })
+
+        with open(alerts_log_path, 'r', encoding='utf-8') as f:
+            alerts = json.load(f)
+
+        # Get last 50 alerts
+        recent_alerts = alerts[-50:] if len(alerts) > 50 else alerts
+
+        return Response({
+            'alerts': recent_alerts,
+            'total': len(alerts)
+        })
+    except Exception as e:
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

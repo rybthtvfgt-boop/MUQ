@@ -13,4 +13,7 @@ urlpatterns = [
     path('dataset/info/', views.get_dataset_info, name='dataset_info'),
     path('dataset/upload/', views.upload_training_image, name='upload_training_image'),
     path('predict/', views.predict_image, name='predict_image'),
+    path('stats/', views.get_monitoring_stats, name='monitoring_stats'),
+    path('alerts/', views.get_alerts, name='get_alerts'),
+    path('alerts/save/', views.save_alert, name='save_alert'),
 ]
