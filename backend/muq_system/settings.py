@@ -25,7 +25,7 @@ def env_list(name, default=''):
     return [item.strip() for item in os.environ.get(name, default).split(',') if item.strip()]
 
 
-DEBUG = env_bool('DEBUG', False)
+DEBUG = env_bool('DEBUG', False)  # Always False in production
 
 SECRET_KEY = os.environ.get('SECRET_KEY', '')
 if not SECRET_KEY:
@@ -218,8 +218,8 @@ USE_TZ = True
 # --- Sessions / security ------------------------------------------------------
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
-SESSION_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = env_bool('SESSION_EXPIRE_AT_BROWSER_CLOSE', True)
 SESSION_COOKIE_AGE = int(os.environ.get('SESSION_COOKIE_AGE', '28800'))
 
