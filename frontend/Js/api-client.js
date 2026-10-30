@@ -177,6 +177,12 @@ class APIClient {
         return [];
     }
 
+    async getStudents() {
+        // Filter users with student type
+        const users = await this.getUsers();
+        return users.filter(user => user.user_type === 'student');
+    }
+
     async createUser(userData) {
         const response = await this.request('/users/', {
             method: 'POST',

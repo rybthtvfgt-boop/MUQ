@@ -15,6 +15,10 @@ class Database {
         return await this.api.getUsers();
     }
 
+    async getStudents() {
+        return await this.api.getStudents();
+    }
+
     async createUser(userData) {
         return await this.api.createUser(userData);
     }
@@ -25,6 +29,11 @@ class Database {
 
     async deleteUser(userId) {
         return await this.api.deleteUser(userId);
+    }
+
+    async addUser(userData) {
+        // Alias for createUser for backward compatibility
+        return await this.createUser(userData);
     }
 
     // Departments
@@ -42,6 +51,11 @@ class Database {
 
     async deleteDepartment(departmentId) {
         return await this.api.deleteDepartment(departmentId);
+    }
+
+    async addDepartment(departmentData) {
+        // Alias for createDepartment for backward compatibility
+        return await this.createDepartment(departmentData);
     }
 
     // Stages
