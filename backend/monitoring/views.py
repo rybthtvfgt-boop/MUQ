@@ -297,6 +297,7 @@ def predict_image(request):
         return Response({'error': 'No image file provided'}, status=status.HTTP_400_BAD_REQUEST)
     
     image_file = request.FILES['image']
+    model_type = request.data.get('model_type', 'exam')  # 'exam' or 'smoking'
     
     # Save temporary file
     import tempfile
@@ -306,7 +307,7 @@ def predict_image(request):
         temp_path = temp_file.name
     
     try:
-        result = predict_from_image_file(temp_path)
+        result = predict_from_image_file(temp_path, model_type)
         return Response(result)
     finally:
         os.unlink(temp_path)
