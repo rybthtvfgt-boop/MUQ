@@ -86,8 +86,8 @@ def upload_dataset(local_dataset_path, token):
                     elif response.status_code == 429:
                         print("[RATE LIMIT]")
                         import time
-                        print("   Waiting 30 seconds...")
-                        time.sleep(30)
+                        print("   Waiting 60 seconds...")
+                        time.sleep(60)
                         # Retry once after rate limit
                         response = upload_image(str(image_file), category, label, token)
                         if response.status_code == 200:
@@ -102,12 +102,12 @@ def upload_dataset(local_dataset_path, token):
 
                     # Very long delay between uploads to avoid rate limiting
                     import time
-                    time.sleep(2.0)  # Increased from 1.0 to 2.0
+                    time.sleep(3.0)  # Increased to 3.0 seconds
                 except Exception as e:
                     print(f"[ERROR] {str(e)[:50]}")
                     total_failed += 1
                     import time
-                    time.sleep(10)  # Increased from 5 to 10
+                    time.sleep(15)  # Increased to 15 seconds
 
     print(f"\n[SUMMARY]")
     print(f"   Uploaded: {total_uploaded}")
