@@ -15,11 +15,12 @@ gunicorn==21.2.0
 whitenoise==6.6.0
 python-dotenv==1.0.0
 
-# ML/AI Libraries for Training (lightweight versions)
-tensorflow-cpu==2.16.1
+# ML/AI Libraries - Use Ultralytics YOLO for pre-trained models
+ultralytics==8.0.0
+torch==2.1.0
+torchvision==0.16.0
 numpy==1.26.4
 Pillow==10.4.0
-scikit-learn==1.5.0
 opencv-python-headless==4.9.0.80
 
 # Storage

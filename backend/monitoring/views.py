@@ -289,13 +289,27 @@ def get_dataset_info(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def predict_image(request):
-    """Predict using trained model (placeholder)"""
-    # This would load the trained model and make predictions
-    # For now, return a placeholder response
-    return Response({
-        'message': 'Model prediction not yet implemented',
-        'note': 'Implement after training is complete'
-    })
+    """Predict using pre-trained YOLO model"""
+    from .pretrained_models import predict_from_image_file
+    from django.core.files.uploadedfile import InMemoryUploadedFile
+    
+    if 'image' not in request.FILES:
+        return Response({'error': 'No image file provided'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    image_file = request.FILES['image']
+    
+    # Save temporary file
+    import tempfile
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as temp_file:
+        for chunk in image_file.chunks():
+            temp_file.write(chunk)
+        temp_path = temp_file.name
+    
+    try:
+        result = predict_from_image_file(temp_path)
+        return Response(result)
+    finally:
+        os.unlink(temp_path)
 
 
 @api_view(['POST'])
