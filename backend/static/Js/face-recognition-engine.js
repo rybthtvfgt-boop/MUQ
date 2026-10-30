@@ -24,10 +24,8 @@ class FaceRecognitionEngine {
             await faceapi.nets.faceRecognitionNet.loadFromUri(modelsUrl);
 
             this.modelsLoaded = true;
-            console.log('✅ Face-API models loaded successfully');
             return true;
         } catch (error) {
-            console.error('❌ Error loading face-api models:', error);
             return false;
         }
     }
@@ -45,7 +43,6 @@ class FaceRecognitionEngine {
 
             return detections;
         } catch (error) {
-            console.error('Error detecting face:', error);
             return null;
         }
     }
@@ -63,7 +60,6 @@ class FaceRecognitionEngine {
 
             return detections;
         } catch (error) {
-            console.error('Error detecting all faces:', error);
             return [];
         }
     }
@@ -384,7 +380,6 @@ class FaceRecognitionEngine {
         if (faceData.version === 1 || faceData.images) {
             // نحتاج لتحويل الصور القديمة إلى embeddings
             // هذا يتطلب معالجة خاصة
-            console.log('Legacy face data detected - migration needed');
             return {
                 version: 1,
                 legacyImages: faceData.images || [],

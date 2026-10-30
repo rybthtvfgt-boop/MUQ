@@ -148,7 +148,6 @@ async function startCamera() {
         await video.play();
         updateMessage('الكاميرا تعمل بنجاح', 'info');
     } catch (error) {
-        console.error('Error accessing camera:', error);
         updateMessage('فشل في الوصول للكاميرا', 'error');
     }
 }
@@ -449,9 +448,6 @@ function saveFaceData() {
                 updateMessage(`✅ تم حفظ ${samplesCount} عينة بنجاح في ${storageType}!`, 'success');
 
                 // عرض تفاصيل الحفظ
-                console.log('✅ Face data saved successfully:', {
-                    personId: targetPerson.id,
-                    personType: targetPerson.type,
                     samples: samplesCount,
                     version: newFaceData.version,
                     model: newFaceData.model,
@@ -485,7 +481,6 @@ function saveFaceData() {
             }
         })
         .catch(error => {
-            console.error('Error saving face data:', error);
             updateMessage('❌ خطأ في حفظ البيانات: ' + error.message, 'error');
             document.getElementById('saveBtn').disabled = false;
         });

@@ -50,7 +50,7 @@ class APIClient {
 
                 // Handle rate limiting (429)
                 if (response.status === 429) {
-                    console.log('Rate limited, waiting 5 seconds...');
+    
                     await new Promise(r => setTimeout(r, 5000));
                     const retryResponse = await this.executeRequest(endpoint, options);
                     resolve(retryResponse);

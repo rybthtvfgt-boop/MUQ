@@ -992,42 +992,29 @@
             document.querySelectorAll('.train-model-btn').forEach(btn => {
                 btn.disabled = false;
                 btn.classList.remove('active');
-                console.log('Button enabled:', btn.id);
             });
 
             // Add event listeners as backup
             document.getElementById('trainSmokingBtn').addEventListener('click', function() {
-                console.log('Smoking button clicked via addEventListener');
                 openTrainingModal('smoking');
             });
 
             document.getElementById('trainExamBtn').addEventListener('click', function() {
-                console.log('Exam button clicked via addEventListener');
                 openTrainingModal('exam');
             });
 
             document.getElementById('trainDangerBtn').addEventListener('click', function() {
-                console.log('Danger button clicked via addEventListener');
                 openTrainingModal('danger');
             });
 
             document.getElementById('trainCriticalBtn').addEventListener('click', function() {
-                console.log('Critical button clicked via addEventListener');
                 openTrainingModal('critical');
             });
-
-            console.log('DOM loaded and elements initialized');
-            console.log('Training buttons enabled');
         });
 
         // Open training modal with preset
         function openTrainingModal(type) {
-            console.log('openTrainingModal called with type:', type);
-            console.log('trainingModal:', trainingModal);
-            console.log('modelNameInput:', modelNameInput);
-
             if (!trainingModal || !modelNameInput) {
-                console.error('Training modal elements not initialized');
                 alert('Error: Modal elements not loaded. Please refresh the page.');
                 return;
             }
@@ -1036,12 +1023,10 @@
                 modelNameInput.value = preset.name;
             }
             trainingModal.classList.add('active');
-            console.log('Modal opened successfully');
         }
 
         function closeTrainingModal() {
             if (!trainingModal) {
-                console.error('Training modal not initialized');
                 return;
             }
             trainingModal.classList.remove('active');
@@ -1049,7 +1034,6 @@
 
         function addLogEntry(message, type = 'info') {
             if (!trainingLog) {
-                console.error('Training log not initialized');
                 return;
             }
             const entry = document.createElement('div');
@@ -1187,7 +1171,6 @@
         // Monitoring Modal
         function openMonitoringModal(type) {
             if (!monitoringModal || !monitoringModalTitle) {
-                console.error('Monitoring modal elements not initialized');
                 return;
             }
             const titles = {
@@ -1204,7 +1187,6 @@
 
         function closeMonitoringModal() {
             if (!monitoringModal) {
-                console.error('Monitoring modal not initialized');
                 return;
             }
             monitoringModal.classList.remove('active');
@@ -1350,7 +1332,6 @@
 
         function addAlert(message, time = null) {
             if (!alertsList) {
-                console.error('Alerts list not initialized');
                 return;
             }
             if (!time) {

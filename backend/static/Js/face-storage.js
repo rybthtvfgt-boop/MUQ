@@ -45,7 +45,6 @@ class FaceStorageManager {
             const result = await response.json().catch(() => ({}));
 
             if (response.ok) {
-                console.log('✅ Face data saved to server:', result);
                 return { success: true, id: result.id, samples_count: result.sample_count };
             }
             if (response.status === 401 || response.status === 403) {
@@ -56,7 +55,6 @@ class FaceStorageManager {
                 (result.person && JSON.stringify(result.person)) || 'خطأ غير معروف';
             return { success: false, error: detail };
         } catch (error) {
-            console.error('❌ Error saving to server:', error);
             return { success: false, error: 'تعذّر الاتصال بالخادم — لم يُحفظ شيء.', networkError: true };
         }
     }
