@@ -51,7 +51,7 @@ def get_training_status():
                         'error': training_status['error']
                     }
         except Exception as e:
-            print(f"Error reading log file: {e}")
+            pass  # Silently handle log file errors
 
     return training_status
 
