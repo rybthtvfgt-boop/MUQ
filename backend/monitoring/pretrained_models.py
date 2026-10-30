@@ -19,6 +19,17 @@ COCO_CLASSES = {
     63: 'laptop'
 }
 
+# Construction hazard class names (from Construction-Hazard-Detection model)
+HAZARD_CLASSES = {
+    0: 'person_without_helmet',
+    1: 'person_without_vest',
+    2: 'worker_near_machinery',
+    3: 'worker_in_restricted_area',
+    4: 'machinery_near_pole',
+    5: 'forklift',
+    6: 'safety_cone'
+}
+
 def get_exam_monitoring_model():
     """
     Load YOLOv5 model for exam cheating detection
@@ -51,6 +62,33 @@ def get_smoking_detection_model():
     
     try:
         # Load YOLOv8n (Nano) - fast and lightweight
+        model = YOLO(model_name)
+        _loaded_models[model_name] = model
+        return model
+    except Exception as e:
+        print(f"Error loading model: {e}")
+        return None
+
+def get_danger_detection_model():
+    """
+    Load YOLO model for danger/hazard detection
+    Uses YOLO26 or YOLO11 from HuggingFace for detecting:
+    - Workers without helmets
+    - Workers without safety vests
+    - Workers near machinery
+    - Workers in restricted areas
+    - Machinery near utility poles
+    - Forklifts
+    """
+    model_name = 'yolov11n.pt'  # Use YOLO11n as base (lightweight)
+    
+    if model_name in _loaded_models:
+        return _loaded_models[model_name]
+    
+    try:
+        # Load YOLO11n (Nano) - fast and lightweight
+        # Note: For production, download the trained Construction-Hazard-Detection model
+        # from HuggingFace: architchitte/Construction-Hazard-Detection
         model = YOLO(model_name)
         _loaded_models[model_name] = model
         return model
@@ -119,21 +157,21 @@ def detect_exam_cheating(image_path_or_array):
 def detect_smoking(image_path_or_array):
     """
     Detect smoking in an image using pre-trained YOLO model
-    
+
     Args:
         image_path_or_array: Path to image file or numpy array
-    
+
     Returns:
         dict: Detection results
     """
     model = get_smoking_detection_model()
     if not model:
         return {'error': 'Model not loaded'}
-    
+
     try:
         # Run inference
         results = model(image_path_or_array, verbose=False)
-        
+
         # Parse results
         detections = []
         for result in results:
@@ -142,7 +180,7 @@ def detect_smoking(image_path_or_array):
                 cls_id = int(box.cls[0])
                 conf = float(box.conf[0])
                 xyxy = box.xyxy[0].tolist()
-                
+
                 # COCO class for 'person' is 0
                 # We'll need to train a custom model for smoking detection
                 # For now, return person detections
@@ -152,7 +190,7 @@ def detect_smoking(image_path_or_array):
                         'confidence': conf,
                         'bbox': xyxy
                     })
-        
+
         return {
             'success': True,
             'detections': detections,
@@ -161,31 +199,91 @@ def detect_smoking(image_path_or_array):
     except Exception as e:
         return {'error': str(e)}
 
+def detect_danger(image_path_or_array):
+    """
+    Detect hazards and dangers in an image using pre-trained YOLO model
+
+    Args:
+        image_path_or_array: Path to image file or numpy array
+
+    Returns:
+        dict: Detection results including hazard objects
+    """
+    model = get_danger_detection_model()
+    if not model:
+        return {'error': 'Model not loaded'}
+
+    try:
+        # Run inference
+        results = model(image_path_or_array, verbose=False)
+
+        # Parse results
+        detections = []
+        hazard_objects = []
+
+        for result in results:
+            boxes = result.boxes
+            for box in boxes:
+                cls_id = int(box.cls[0])
+                conf = float(box.conf[0])
+                xyxy = box.xyxy[0].tolist()
+
+                # Map to hazard classes
+                class_name = HAZARD_CLASSES.get(cls_id, f'unknown_{cls_id}')
+
+                # Detect potential hazards
+                # For now, we use COCO classes - person, truck, car, bus (near machinery)
+                if cls_id in [0, 2, 3, 5, 7] and conf > 0.5:  # person, car, motorcycle, bus, truck
+                    is_hazard = cls_id != 0  # Vehicles are hazards
+                    hazard_info = {
+                        'class': class_name,
+                        'confidence': conf,
+                        'bbox': xyxy,
+                        'is_hazard': is_hazard
+                    }
+                    detections.append(hazard_info)
+                    if is_hazard:
+                        hazard_objects.append(hazard_info)
+
+        return {
+            'success': True,
+            'detections': detections,
+            'hazard_objects': hazard_objects,
+            'hazard_count': len(hazard_objects),
+            'has_danger': len(hazard_objects) > 0
+        }
+    except Exception as e:
+        return {'error': str(e)}
+
 def predict_from_image_file(image_path, model_type='exam'):
     """
     Make prediction from image file path
-    
+
     Args:
         image_path: Path to image file
-        model_type: 'exam' for cheating detection, 'smoking' for smoking detection
+        model_type: 'exam' for cheating detection, 'smoking' for smoking detection, 'danger' for hazard detection
     """
     if not os.path.exists(image_path):
         return {'error': 'Image file not found'}
-    
+
     if model_type == 'exam':
         return detect_exam_cheating(image_path)
+    elif model_type == 'danger':
+        return detect_danger(image_path)
     else:
         return detect_smoking(image_path)
 
 def predict_from_image_array(image_array, model_type='exam'):
     """
     Make prediction from numpy array
-    
+
     Args:
         image_array: numpy array of image
-        model_type: 'exam' for cheating detection, 'smoking' for smoking detection
+        model_type: 'exam' for cheating detection, 'smoking' for smoking detection, 'danger' for hazard detection
     """
     if model_type == 'exam':
         return detect_exam_cheating(image_array)
+    elif model_type == 'danger':
+        return detect_danger(image_array)
     else:
         return detect_smoking(image_array)

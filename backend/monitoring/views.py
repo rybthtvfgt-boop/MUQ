@@ -292,20 +292,20 @@ def predict_image(request):
     """Predict using pre-trained YOLO model"""
     from .pretrained_models import predict_from_image_file
     from django.core.files.uploadedfile import InMemoryUploadedFile
-    
+
     if 'image' not in request.FILES:
         return Response({'error': 'No image file provided'}, status=status.HTTP_400_BAD_REQUEST)
-    
+
     image_file = request.FILES['image']
-    model_type = request.data.get('model_type', 'exam')  # 'exam' or 'smoking'
-    
+    model_type = request.data.get('model_type', 'exam')  # 'exam', 'smoking', or 'danger'
+
     # Save temporary file
     import tempfile
     with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as temp_file:
         for chunk in image_file.chunks():
             temp_file.write(chunk)
         temp_path = temp_file.name
-    
+
     try:
         result = predict_from_image_file(temp_path, model_type)
         return Response(result)
