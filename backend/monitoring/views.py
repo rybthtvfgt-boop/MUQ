@@ -297,7 +297,7 @@ def predict_image(request):
         return Response({'error': 'No image file provided'}, status=status.HTTP_400_BAD_REQUEST)
 
     image_file = request.FILES['image']
-    model_type = request.data.get('model_type', 'exam')  # 'exam', 'smoking', or 'danger'
+    model_type = request.data.get('model_type', 'exam')  # 'exam', 'smoking', 'danger', or 'critical'
 
     # Save temporary file
     import tempfile
