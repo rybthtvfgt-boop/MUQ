@@ -218,13 +218,21 @@ def detect_smoking(image_path_or_array):
 
                 # COCO class for 'person' is 0
                 # We'll need to train a custom model for smoking detection
-                # For now, return person detections
-                if cls_id == 0 and conf > 0.5:  # Person class
+                # For now, return person detections with lower threshold
+                if cls_id == 0 and conf > 0.3:  # Person class - lowered threshold
                     detections.append({
                         'class': 'person',
                         'confidence': conf,
                         'bbox': xyxy
                     })
+
+        # If persons detected, consider potential smoking (since we don't have custom model)
+        # In production, this should be replaced with a trained smoking detection model
+        person_count = len(detections)
+        if person_count > 0:
+            # Mark as potential smoking if persons detected
+            # This is a placeholder - real smoking detection requires custom model
+            pass
 
         return {
             'success': True,
@@ -332,8 +340,8 @@ def detect_critical_danger(image_path_or_array):
 
                 class_name = critical_classes.get(cls_id, f'unknown_{cls_id}')
 
-                # Detect critical dangers
-                is_critical = cls_id in [39, 44]  # Weapons are critical
+                # Detect critical dangers - lower threshold for weapons
+                is_critical = cls_id in [39, 44] and conf > 0.3  # Weapons are critical even with lower confidence
                 danger_info = {
                     'class': class_name,
                     'confidence': conf,
@@ -344,12 +352,12 @@ def detect_critical_danger(image_path_or_array):
                 if is_critical:
                     critical_danger_objects.append(danger_info)
 
-        # If many persons detected, potential fight/riot
+        # If 2 or more persons detected, potential fight/riot (lowered threshold)
         person_count = sum(1 for d in detections if d['class'] == 'person')
-        if person_count >= 3:
+        if person_count >= 2:
             critical_danger_objects.append({
                 'class': 'potential_fight_or_riot',
-                'confidence': min(0.9, person_count * 0.2),
+                'confidence': min(0.95, 0.5 + person_count * 0.15),  # Higher confidence with more people
                 'bbox': [],
                 'is_critical_danger': True,
                 'person_count': person_count
