@@ -229,14 +229,6 @@
             box-shadow: 0 20px 50px rgba(59, 130, 246, 0.3);
         }
 
-        .monitoring-card.danger {
-            border-color: rgba(245, 158, 11, 0.3);
-        }
-
-        .monitoring-card.danger:hover {
-            box-shadow: 0 20px 50px rgba(245, 158, 11, 0.3);
-        }
-
         .monitoring-card.critical {
             border-color: rgba(239, 68, 68, 0.5);
         }
@@ -839,9 +831,6 @@
                 <button class="train-model-btn" id="trainExamBtn" onclick="openTrainingModal('exam')" onmousedown="console.log('Exam button clicked')">
                     📝 تدريب الامتحانات
                 </button>
-                <button class="train-model-btn" id="trainDangerBtn" onclick="openTrainingModal('danger')" onmousedown="console.log('Danger button clicked')">
-                    ⚠️ تدريب الأخطار
-                </button>
                 <button class="train-model-btn" id="trainCriticalBtn" onclick="openTrainingModal('critical')" onmousedown="console.log('Critical button clicked')">
                     🔴 تدريب الحالات الحرجة
                 </button>
@@ -891,17 +880,6 @@
                 </div>
                 <h3>مراقبة الامتحانات</h3>
                 <p>مراقبة القاعات الامتحانية واكتشاف الغش والمخالفات</p>
-                <div class="status inactive">غير نشط</div>
-            </div>
-
-            <div class="monitoring-card danger" onclick="openMonitoringModal('danger')">
-                <div class="monitoring-card-icon">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M12 2L1 21H23L12 2ZM12 6L19.53 19H4.47L12 6ZM11 10V14H13V10H11ZM11 16V18H13V16H11Z"></path>
-                    </svg>
-                </div>
-                <h3>مراقبة الأخطار</h3>
-                <p>اكتشاف الحالات الطارئة والأخطار في المبنى</p>
                 <div class="status inactive">غير نشط</div>
             </div>
 
@@ -1019,9 +997,6 @@
             exam: {
                 name: 'نموذج تدريب مراقبة الامتحانات'
             },
-            danger: {
-                name: 'نموذج تدريب مراقبة الأخطار'
-            },
             critical: {
                 name: 'نموذج تدريب الحالات الحرجة'
             }
@@ -1063,11 +1038,6 @@
             document.getElementById('trainExamBtn').addEventListener('click', function() {
                 console.log('Exam button clicked via addEventListener');
                 openTrainingModal('exam');
-            });
-
-            document.getElementById('trainDangerBtn').addEventListener('click', function() {
-                console.log('Danger button clicked via addEventListener');
-                openTrainingModal('danger');
             });
 
             document.getElementById('trainCriticalBtn').addEventListener('click', function() {
@@ -1252,7 +1222,7 @@
             const titles = {
                 smoking: 'مراقبة التدخين',
                 exam: 'مراقبة الامتحانات',
-                danger: 'مراقبة الأخطار',
+
                 critical: 'مراقبة الحالات الحرجة'
             };
 
@@ -1331,10 +1301,6 @@
                                     hasAbnormality = true;
                                     const obj = result.cheating_objects[0];
                                     alertMessage = `⚠️ حالة غير طبيعية: اكتشاف ${obj.class} (ثقة: ${(obj.confidence * 100).toFixed(1)}%)`;
-                                } else if (currentMonitoringType === 'danger' && result.has_danger) {
-                                    hasAbnormality = true;
-                                    const obj = result.hazard_objects[0];
-                                    alertMessage = `⚠️ حالة غير طبيعية: اكتشاف خطر ${obj.class} (ثقة: ${(obj.confidence * 100).toFixed(1)}%)`;
                                 } else if (currentMonitoringType === 'critical' && result.has_critical_danger) {
                                     hasAbnormality = true;
                                     const obj = result.critical_danger_objects[0];
