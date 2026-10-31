@@ -22,10 +22,10 @@ async function checkAuth() {
 }
 
 let currentUser = null;
-checkAuth().then(user => {
+checkAuth().then(async user => {
     currentUser = user;
     if (currentUser) {
-        loadOverview();
+        await loadOverview();
     }
 });
 
@@ -55,7 +55,7 @@ function showSection(sectionId) {
 
     // Load section data
     if (sectionId === 'overview') {
-        loadOverview();
+        await loadOverview();
     } else if (sectionId === 'users') {
         loadUsers();
     } else if (sectionId === 'students') {
@@ -76,14 +76,14 @@ function showSection(sectionId) {
 }
 
 // Load overview data
-function loadOverview() {
-    const students = db.getStudents();
-    const teachers = db.getTeachers();
-    const administrativeStaff = db.getAdministrativeStaff();
-    const securityStaff = db.getSecurityStaff();
-    const serviceStaff = db.getServiceStaff();
-    const schedule = db.getSchedule();
-    const attendance = db.getAttendance();
+async function loadOverview() {
+    const students = await db.getStudents();
+    const teachers = await db.getTeachers();
+    const administrativeStaff = await db.getAdministrativeStaff();
+    const securityStaff = await db.getSecurityStaff();
+    const serviceStaff = await db.getServiceStaff();
+    const schedule = await db.getSchedule();
+    const attendance = await db.getAttendance();
 
     document.getElementById('totalStudents').textContent = students.length;
     document.getElementById('totalTeachers').textContent = teachers.length;
@@ -1775,4 +1775,6 @@ document.getElementById('userForm').addEventListener('submit', async function(e)
 });
 
 // Initialize
-loadOverview();
+(async () => {
+    await loadOverview();
+})();

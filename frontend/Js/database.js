@@ -19,6 +19,26 @@ class Database {
         return await this.api.getStudents();
     }
 
+    async getTeachers() {
+        const users = await this.api.getUsers();
+        return users.filter(user => user.user_type === 'teacher');
+    }
+
+    async getAdministrativeStaff() {
+        const users = await this.api.getUsers();
+        return users.filter(user => user.user_type === 'administrative');
+    }
+
+    async getSecurityStaff() {
+        const users = await this.api.getUsers();
+        return users.filter(user => user.user_type === 'security');
+    }
+
+    async getServiceStaff() {
+        const users = await this.api.getUsers();
+        return users.filter(user => user.user_type === 'service');
+    }
+
     async createUser(userData) {
         return await this.api.createUser(userData);
     }
