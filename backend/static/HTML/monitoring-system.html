@@ -1039,7 +1039,7 @@
             addLogEntry(`اسم النموذج: ${modelName}`, 'info');
 
             try {
-                const response = await api.request('/api/monitoring/training/start/', {
+                const response = await api.request('/monitoring/training/start/', {
                     method: 'POST',
                     body: JSON.stringify({ model_name: modelName }),
                 });
@@ -1086,7 +1086,7 @@
             addLogEntry('جاري إعادة تعيين حالة التدريب...', 'info');
 
             try {
-                const response = await api.request('/api/monitoring/training/reset/', {
+                const response = await api.request('/monitoring/training/reset/', {
                     method: 'POST',
                 });
 
@@ -1110,7 +1110,7 @@
         async function monitorTrainingProgress(sessionId) {
             const pollInterval = setInterval(async () => {
                 try {
-                    const response = await api.request(`/api/monitoring/training/sessions/${sessionId}/`);
+                    const response = await api.request(`/monitoring/training/sessions/${sessionId}/`);
                     if (response.ok) {
                         const data = await response.json();
 
@@ -1221,7 +1221,7 @@
                         formData.append('model_type', currentMonitoringType);
 
                         try {
-                            const response = await api.request('/api/monitoring/predict/', {
+                            const response = await api.request('/monitoring/predict/', {
                                 method: 'POST',
                                 body: formData,
                             });
@@ -1377,7 +1377,7 @@
 
                 addAlert('جاري تحليل الصورة/الفيديو...');
 
-                const response = await api.request('/api/monitoring/predict/', {
+                const response = await api.request('/monitoring/predict/', {
                     method: 'POST',
                     body: formData,
                 });
@@ -1455,7 +1455,7 @@
 
         async function saveAlertToDatabase(message, monitoringType) {
             try {
-                await api.request('/api/monitoring/alerts/save/', {
+                await api.request('/monitoring/alerts/save/', {
                     method: 'POST',
                     body: JSON.stringify({
                         alert_type: 'detection',
@@ -1494,7 +1494,7 @@
         // Update stats with real data
         async function updateStats() {
             try {
-                const response = await api.request('/api/monitoring/stats/');
+                const response = await api.request('/monitoring/stats/');
 
                 if (response.ok) {
                     const data = await response.json();
@@ -1526,7 +1526,7 @@
         // Load alerts from database
         async function loadAlertsFromDatabase() {
             try {
-                const response = await api.request('/api/monitoring/alerts/');
+                const response = await api.request('/monitoring/alerts/');
 
                 if (response.ok) {
                     const data = await response.json();
@@ -1560,7 +1560,7 @@
         // Load training history
         async function loadTrainingHistory() {
             try {
-                const response = await api.request('/api/monitoring/training/history/');
+                const response = await api.request('/monitoring/training/history/');
 
                 if (response.ok) {
                     const data = await response.json();
