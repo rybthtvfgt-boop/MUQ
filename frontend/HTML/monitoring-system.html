@@ -824,17 +824,6 @@
         <div class="monitoring-header">
             <h1>نظام المراقبة الذكي</h1>
             <p>مراقبة القاعات والكشف عن المخالفات باستخدام الذكاء الاصطناعي</p>
-            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
-                <button class="train-model-btn" id="trainSmokingBtn" onclick="openTrainingModal('smoking')" onmousedown="console.log('Smoking button clicked')">
-                    🚀 تدريب التدخين
-                </button>
-                <button class="train-model-btn" id="trainExamBtn" onclick="openTrainingModal('exam')" onmousedown="console.log('Exam button clicked')">
-                    📝 تدريب الامتحانات
-                </button>
-                <button class="train-model-btn" id="trainCriticalBtn" onclick="openTrainingModal('critical')" onmousedown="console.log('Critical button clicked')">
-                    🔴 تدريب الحالات الحرجة
-                </button>
-            </div>
         </div>
 
         <div class="stats-bar">
@@ -988,19 +977,6 @@
         let monitoringInterval = null;
         let currentStatus = 'normal'; // 'normal' or 'abnormal'
         let lastAlertTime = null;
-
-        // Training presets
-        const trainingPresets = {
-            smoking: {
-                name: 'تدريب التدخين'
-            },
-            exam: {
-                name: 'نموذج تدريب مراقبة الامتحانات'
-            },
-            critical: {
-                name: 'نموذج تدريب الحالات الحرجة'
-            }
-        };
 
         // Initialize variables
         let trainingModal, progressFill, progressText, trainingLog, startTrainingBtn, modelNameInput;

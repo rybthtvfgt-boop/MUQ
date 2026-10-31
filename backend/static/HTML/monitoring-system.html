@@ -824,17 +824,6 @@
         <div class="monitoring-header">
             <h1>نظام المراقبة الذكي</h1>
             <p>مراقبة القاعات والكشف عن المخالفات باستخدام الذكاء الاصطناعي</p>
-            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
-                <button class="train-model-btn" id="trainSmokingBtn" onclick="openTrainingModal('smoking')" onmousedown="console.log('Smoking button clicked')">
-                    🚀 تدريب التدخين
-                </button>
-                <button class="train-model-btn" id="trainExamBtn" onclick="openTrainingModal('exam')" onmousedown="console.log('Exam button clicked')">
-                    📝 تدريب الامتحانات
-                </button>
-                <button class="train-model-btn" id="trainCriticalBtn" onclick="openTrainingModal('critical')" onmousedown="console.log('Critical button clicked')">
-                    🔴 تدريب الحالات الحرجة
-                </button>
-            </div>
         </div>
 
         <div class="stats-bar">
@@ -989,19 +978,6 @@
         let currentStatus = 'normal'; // 'normal' or 'abnormal'
         let lastAlertTime = null;
 
-        // Training presets
-        const trainingPresets = {
-            smoking: {
-                name: 'تدريب التدخين'
-            },
-            exam: {
-                name: 'نموذج تدريب مراقبة الامتحانات'
-            },
-            critical: {
-                name: 'نموذج تدريب الحالات الحرجة'
-            }
-        };
-
         // Initialize variables
         let trainingModal, progressFill, progressText, trainingLog, startTrainingBtn, modelNameInput;
         let monitoringModal, monitoringCamera, monitoringModalTitle, alertsList;
@@ -1022,38 +998,9 @@
             monitoringModalTitle = document.getElementById('monitoringModalTitle');
             alertsList = document.getElementById('alertsList');
 
-            // Ensure training buttons are enabled
-            document.querySelectorAll('.train-model-btn').forEach(btn => {
-                btn.disabled = false;
-                btn.classList.remove('active');
-            });
-
-            // Add event listeners as backup
-            document.getElementById('trainSmokingBtn').addEventListener('click', function() {
-                openTrainingModal('smoking');
-            });
-
-            document.getElementById('trainExamBtn').addEventListener('click', function() {
-                openTrainingModal('exam');
-            });
-
-            document.getElementById('trainCriticalBtn').addEventListener('click', function() {
-                openTrainingModal('critical');
-            });
+        // Training functionality removed
+        // Training modal is no longer needed
         });
-
-        // Open training modal with preset
-        function openTrainingModal(type) {
-            if (!trainingModal || !modelNameInput) {
-                alert('Error: Modal elements not loaded. Please refresh the page.');
-                return;
-            }
-            const preset = trainingPresets[type];
-            if (preset) {
-                modelNameInput.value = preset.name;
-            }
-            trainingModal.classList.add('active');
-        }
 
         function closeTrainingModal() {
             if (!trainingModal) {
