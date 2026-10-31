@@ -3,13 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تسجيل الوجه - نظام MUQ</title>
+    <title>تسجيل الوجه الذكي - نظام MUQ</title>
     <link rel="stylesheet" href="../css/style.css">
     <style>
-        .face-registration-container {
-            max-width: 800px;
-            margin: 0 auto;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             padding: 20px;
+        }
+
+        .face-registration-container {
+            max-width: 900px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        h1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            font-weight: 900;
         }
 
         .camera-container {
@@ -21,8 +54,9 @@
 
         #videoElement {
             width: 100%;
-            border-radius: 10px;
-            border: 3px solid var(--primary-orange);
+            border-radius: 20px;
+            border: 3px solid rgba(102, 126, 234, 0.3);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
         }
 
         .face-frame {
@@ -30,33 +64,33 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 200px;
-            height: 200px;
-            border: 3px solid var(--primary-orange);
+            width: 220px;
+            height: 220px;
+            border: 3px solid rgba(102, 126, 234, 0.5);
             border-radius: 50%;
             pointer-events: none;
             transition: all 0.3s ease;
-            box-shadow: 0 0 20px rgba(255, 107, 53, 0.3);
+            box-shadow: 0 0 30px rgba(102, 126, 234, 0.3);
         }
 
         .face-frame.valid {
-            border-color: var(--success);
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+            border-color: #38ef7d;
+            box-shadow: 0 0 30px rgba(56, 239, 125, 0.5);
         }
 
         .face-frame.invalid {
-            border-color: var(--error);
-            box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+            border-color: #f45c43;
+            box-shadow: 0 0 30px rgba(244, 92, 67, 0.5);
         }
 
         .face-frame.too-close {
-            border-color: var(--error);
+            border-color: #f45c43;
             border-width: 5px;
             animation: pulse-red 0.5s infinite;
         }
 
         .face-frame.too-far {
-            border-color: #ffff00;
+            border-color: #ffd700;
             border-width: 5px;
             animation: pulse-yellow 0.5s infinite;
         }
@@ -92,172 +126,186 @@
         }
 
         .progress-section {
-            margin: 20px 0;
-            padding: 20px;
-            background: var(--card-bg);
-            border-radius: 10px;
-            border: 1px solid var(--primary-orange);
+            margin: 25px 0;
+            padding: 30px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 20px;
+            border: 2px solid #dee2e6;
         }
 
         .progress-bar {
             width: 100%;
-            height: 20px;
-            background: var(--dark-bg);
-            border-radius: 10px;
+            height: 25px;
+            background: #e9ecef;
+            border-radius: 15px;
             overflow: hidden;
-            margin: 10px 0;
+            margin: 15px 0;
         }
 
         .progress-fill {
             height: 100%;
-            background: var(--brand-gradient);
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
             transition: width 0.3s ease;
         }
 
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin: 10px 0;
+            gap: 15px;
+            margin: 15px 0;
         }
 
         .stat-item {
             text-align: center;
-            padding: 10px;
-            background: var(--dark-bg);
-            border-radius: 5px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
 
         .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: var(--primary-orange);
+            font-size: 2em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
         }
 
         .stat-label {
-            font-size: 12px;
-            color: #888;
+            font-size: 0.9em;
+            color: #666;
+            font-weight: 600;
+            margin-top: 5px;
         }
 
         .current-pose {
             text-align: center;
-            font-size: 18px;
-            color: var(--primary-orange);
-            margin: 10px 0;
-            padding: 10px;
-            background: var(--dark-bg);
-            border-radius: 5px;
+            font-size: 1.3em;
+            color: #667eea;
+            margin: 15px 0;
+            padding: 15px;
+            background: #fff;
+            border-radius: 15px;
+            font-weight: 700;
         }
 
         .quality-indicator {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            margin: 10px 0;
+            gap: 15px;
+            margin: 15px 0;
         }
 
         .quality-bar {
-            width: 100px;
-            height: 10px;
-            background: var(--dark-bg);
-            border-radius: 5px;
+            width: 150px;
+            height: 12px;
+            background: #e9ecef;
+            border-radius: 6px;
             overflow: hidden;
         }
 
         .quality-fill {
             height: 100%;
-            background: var(--success);
+            background: linear-gradient(90deg, #11998e 0%, #38ef7d 100%);
             transition: width 0.3s ease;
         }
 
         .pose-checklist {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 5px;
-            margin: 10px 0;
+            gap: 10px;
+            margin: 15px 0;
         }
 
         .pose-item {
             text-align: center;
-            padding: 5px;
-            background: var(--dark-bg);
-            border-radius: 5px;
-            font-size: 12px;
+            padding: 12px;
+            background: #fff;
+            border-radius: 10px;
+            font-size: 0.9em;
+            font-weight: 600;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
         }
 
         .pose-item.completed {
-            background: var(--success);
-            color: #000;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: #fff;
         }
 
         .pose-item.pending {
-            background: var(--dark-bg);
-            color: #888;
+            background: #e9ecef;
+            color: #666;
         }
 
         .pose-item.current {
-            background: var(--primary-orange);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: #fff;
         }
 
         .message-box {
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 15px;
             text-align: center;
+            font-size: 1em;
+            font-weight: 500;
         }
 
         .message-box.success {
-            background: var(--success);
-            color: #000;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: #fff;
         }
 
         .message-box.error {
-            background: var(--error);
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
             color: #fff;
         }
 
         .message-box.info {
-            background: var(--dark-bg);
-            color: #fff;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
         }
 
         .btn-group {
             display: flex;
-            gap: 10px;
+            gap: 15px;
             justify-content: center;
-            margin: 20px 0;
+            margin: 25px 0;
         }
 
         .btn {
-            padding: 12px 30px;
+            padding: 15px 35px;
             border: none;
-            border-radius: 5px;
+            border-radius: 15px;
             cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
+            font-size: 1.1em;
+            font-weight: 700;
             transition: all 0.3s ease;
         }
 
         .btn-primary {
-            background: var(--brand-gradient);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: #fff;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.3);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
         }
 
         .btn-secondary {
-            background: var(--dark-bg);
-            color: #fff;
-            border: 1px solid var(--primary-orange);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+            border: 2px solid #dee2e6;
         }
 
         .btn-secondary:hover {
-            background: var(--card-bg);
+            background: linear-gradient(135deg, #e9ecef 0%, #adb5bd 100%);
+            transform: translateY(-2px);
         }
 
         .btn:disabled {
@@ -268,14 +316,26 @@
         .liveness-challenge {
             display: none;
             text-align: center;
-            padding: 20px;
-            background: var(--dark-bg);
-            border-radius: 10px;
-            margin: 20px 0;
+            padding: 30px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 20px;
+            margin: 25px 0;
+            border: 2px solid #dee2e6;
         }
 
         .liveness-challenge.active {
             display: block;
+        }
+
+        .liveness-challenge h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .liveness-challenge p {
+            color: #666;
+            margin: 10px 0;
         }
 
         @media (max-width: 768px) {
@@ -286,6 +346,14 @@
             .pose-checklist {
                 grid-template-columns: repeat(2, 1fr);
             }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
         }
     </style>
     <script src="../Js/portal-auth.js"></script>
@@ -293,12 +361,12 @@
 </head>
 <body>
     <div class="face-registration-container">
-        <h1 id="personName">تسجيل الوجه</h1>
+        <h1 id="personName">تسجيل الوجه الذكي</h1>
 
         <div class="camera-container">
             <video id="videoElement" autoplay playsinline></video>
             <div id="faceFrame" class="face-frame"></div>
-            <div id="guidanceOverlay" style="position: absolute; top: 10px; left: 10px; right: 10px; background: rgba(0,0,0,0.7); color: #fff; padding: 10px; border-radius: 5px; text-align: center; font-size: 14px; display: none;">
+            <div id="guidanceOverlay" style="position: absolute; top: 15px; left: 15px; right: 15px; background: rgba(0,0,0,0.7); color: #fff; padding: 15px; border-radius: 10px; text-align: center; font-size: 0.95em; display: none;">
                 <div id="guidanceText"></div>
             </div>
         </div>
@@ -326,11 +394,11 @@
             </div>
 
             <div class="quality-indicator">
-                <span>الجودة:</span>
+                <span style="color: #666; font-weight: 600;">الجودة:</span>
                 <div class="quality-bar">
                     <div class="quality-fill" id="qualityFill" style="width: 0%"></div>
                 </div>
-                <span id="qualityValue">0%</span>
+                <span id="qualityValue" style="color: #667eea; font-weight: 700;">0%</span>
             </div>
 
             <div class="pose-checklist" id="poseChecklist">
