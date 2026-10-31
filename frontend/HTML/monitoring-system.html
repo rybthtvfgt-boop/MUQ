@@ -601,6 +601,15 @@
             box-shadow: 0 8px 25px rgba(255, 176, 32, 0.4);
         }
 
+        .btn-upload {
+            background: var(--info);
+        }
+
+        .btn-upload:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.4);
+        }
+
         .monitoring-alerts {
             background: var(--dark-bg);
             border-radius: var(--radius-md);
@@ -924,11 +933,15 @@
             </div>
 
             <video class="monitoring-camera" id="monitoringCamera" autoplay muted></video>
+            <img class="monitoring-camera" id="monitoringImage" style="display: none; max-width: 100%; max-height: 100%; object-fit: contain;">
+            <video class="monitoring-camera" id="monitoringVideo" style="display: none; max-width: 100%; max-height: 100%; object-fit: contain;" controls></video>
 
             <div class="monitoring-controls">
                 <button class="btn-start" onclick="startMonitoring()">بدء المراقبة</button>
                 <button class="btn-stop" onclick="stopMonitoring()">إيقاف</button>
                 <button class="btn-record" onclick="recordAlert()">تسجيل تنبيه</button>
+                <button class="btn-upload" onclick="document.getElementById('fileInput').click()">رفع صورة/فيديو</button>
+                <input type="file" id="fileInput" accept="image/*,video/*" style="display: none;" onchange="handleFileUpload(event)">
             </div>
 
             <div class="monitoring-alerts">
@@ -1313,6 +1326,40 @@
             }
             if (monitoringCamera) monitoringCamera.srcObject = null;
             isMonitoring = false;
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const fileType = file.type;
+            const monitoringCamera = document.getElementById('monitoringCamera');
+            const monitoringImage = document.getElementById('monitoringImage');
+            const monitoringVideo = document.getElementById('monitoringVideo');
+
+            // Hide all elements first
+            monitoringCamera.style.display = 'none';
+            monitoringImage.style.display = 'none';
+            monitoringVideo.style.display = 'none';
+
+            if (fileType.startsWith('image/')) {
+                // Show image
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    monitoringImage.src = e.target.result;
+                    monitoringImage.style.display = 'block';
+                    addAlert('تم رفع الصورة بنجاح');
+                };
+                reader.readAsDataURL(file);
+            } else if (fileType.startsWith('video/')) {
+                // Show video
+                const url = URL.createObjectURL(file);
+                monitoringVideo.src = url;
+                monitoringVideo.style.display = 'block';
+                addAlert('تم رفع الفيديو بنجاح');
+            } else {
+                alert('نوع الملف غير مدعوم. يرجى رفع صورة أو فيديو.');
+            }
         }
 
         function recordAlert() {
