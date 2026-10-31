@@ -36,7 +36,7 @@ async function logout() {
 }
 
 // Show section function
-function showSection(sectionId) {
+async function showSection(sectionId, event) {
     // Hide all sections
     document.querySelectorAll('.section').forEach(section => {
         section.style.display = 'none';
