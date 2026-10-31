@@ -850,7 +850,7 @@
         </div>
 
         <div class="monitoring-grid">
-            <div class="monitoring-card smoking" onclick="openMonitoringModal('smoking')">
+            <div class="monitoring-card smoking" onclick="currentMonitoringType='smoking'; openMonitoringModalAndStart('smoking')">
                 <div class="monitoring-card-icon">
                     <svg viewBox="0 0 24 24">
                         <path d="M12 2C13.1 2 14 2.9 14 4V5H16C17.1 5 18 5.9 18 7V19C18 20.1 17.1 21 16 21H8C6.9 21 6 20.1 6 19V7C6 5.9 6.9 5 8 5H10V4C10 2.9 10.9 2 12 2ZM12 4C11.4 4 11 4.4 11 5V6H13V5C13 4.4 12.6 4 12 4Z"></path>
@@ -861,7 +861,7 @@
                 <div class="status inactive">غير نشط</div>
             </div>
 
-            <div class="monitoring-card exam" onclick="openMonitoringModal('exam')">
+            <div class="monitoring-card exam" onclick="currentMonitoringType='exam'; openMonitoringModalAndStart('exam')">
                 <div class="monitoring-card-icon">
                     <svg viewBox="0 0 24 24">
                         <path d="M12 2L1 21H23L12 2ZM12 6L19.53 19H4.47L12 6ZM11 10V14H13V10H11ZM11 16V18H13V16H11Z"></path>
@@ -872,7 +872,7 @@
                 <div class="status inactive">غير نشط</div>
             </div>
 
-            <div class="monitoring-card critical" onclick="openMonitoringModal('critical')">
+            <div class="monitoring-card critical" onclick="currentMonitoringType='critical'; openMonitoringModalAndStart('critical')">
                 <div class="monitoring-card-icon">
                     <svg viewBox="0 0 24 24">
                         <path d="M12 2L1 21H23L12 2ZM12 6L19.53 19H4.47L12 6ZM11 10V14H13V10H11ZM11 16V18H13V16H11Z"></path>
@@ -1199,13 +1199,17 @@
             const titles = {
                 smoking: 'مراقبة التدخين',
                 exam: 'مراقبة الامتحانات',
-
                 critical: 'مراقبة الحالات الحرجة'
             };
 
             currentMonitoringType = type;
             monitoringModalTitle.textContent = titles[type] || 'مراقبة الكاميرا';
             monitoringModal.classList.add('active');
+        }
+
+        function openMonitoringModalAndStart(type) {
+            openMonitoringModal(type);
+            startMonitoring();
         }
 
         function closeMonitoringModal() {
@@ -1388,13 +1392,13 @@
             if (fileType.startsWith('image/')) {
                 // Show image and analyze it
                 const reader = new FileReader();
-                reader.onload = async function(e) {
+                reader.onload = function(e) {
                     monitoringImage.src = e.target.result;
                     monitoringImage.style.display = 'block';
                     addAlert('تم رفع الصورة بنجاح');
 
                     // Analyze the image with AI
-                    await analyzeUploadedFile(file);
+                    analyzeUploadedFile(file);
                 };
                 reader.readAsDataURL(file);
             } else if (fileType.startsWith('video/')) {
@@ -1405,7 +1409,7 @@
                 addAlert('تم رفع الفيديو بنجاح');
 
                 // Analyze the video with AI
-                await analyzeUploadedFile(file);
+                analyzeUploadedFile(file);
             } else {
                 alert('نوع الملف غير مدعوم. يرجى رفع صورة أو فيديو.');
             }
