@@ -3,7 +3,7 @@ async function checkAuth(requiredType = null) {
     const accessToken = localStorage.getItem('accessToken');
 
     if (!accessToken) {
-        window.location.href = 'login.html';
+        window.location.href = '../HTML/login.html';
         return false;
     }
 
@@ -11,14 +11,14 @@ async function checkAuth(requiredType = null) {
         const user = await api.getCurrentUser();
         if (!user) {
             await api.logout();
-            window.location.href = 'login.html';
+            window.location.href = '../HTML/login.html';
             return false;
         }
 
         // Check if user type matches required type
         if (requiredType && user.user_type !== requiredType && user.user_type !== 'admin') {
             alert('ليس لديك صلاحية للوصول إلى هذه الصفحة');
-            window.location.href = 'login.html';
+            window.location.href = '../HTML/login.html';
             return false;
         }
 
@@ -28,7 +28,7 @@ async function checkAuth(requiredType = null) {
     } catch (error) {
         console.error('Auth check failed:', error);
         await api.logout();
-        window.location.href = 'login.html';
+        window.location.href = '../HTML/login.html';
         return false;
     }
 }
@@ -47,7 +47,7 @@ function getCurrentUser() {
 // Logout function
 async function logout() {
     await api.logout();
-    window.location.href = 'login.html';
+    window.location.href = '../HTML/login.html';
 }
 
 // Run auth check on page load

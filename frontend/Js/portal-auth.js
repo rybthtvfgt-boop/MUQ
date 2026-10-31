@@ -32,14 +32,14 @@ function requirePortalAccess(portalKey, options) {
     const user = getPortalSessionUser();
 
     if (!user) {
-        window.location.replace('login.html?next=' + portalKey);
+        window.location.replace('../HTML/login.html?next=' + portalKey);
         return false;
     }
 
     const isAdmin = user.user_type === 'admin' || user.user_type === 'super_admin' || user.is_superuser;
     const isPortalOperator = user.user_type === portalKey || isAdmin;
     if (!isPortalOperator && !(allowSelfRegistration && isSelfRegistration(user))) {
-        window.location.replace('login.html?denied=' + portalKey);
+        window.location.replace('../HTML/login.html?denied=' + portalKey);
         return false;
     }
 
@@ -64,5 +64,5 @@ function showPortalSessionBar(user, portal) {
 
 function portalLogout() {
     localStorage.removeItem('currentUser');
-    window.location.href = 'login.html';
+    window.location.href = '../HTML/login.html';
 }

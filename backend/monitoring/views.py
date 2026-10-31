@@ -289,7 +289,7 @@ def get_dataset_info(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def predict_image(request):
-    """Predict using pre-trained YOLO model"""
+    """Predict using pre-trained YOLO model - handles both images and videos"""
     from .pretrained_models import predict_from_image_file
     from django.core.files.uploadedfile import InMemoryUploadedFile
 
@@ -299,18 +299,56 @@ def predict_image(request):
     image_file = request.FILES['image']
     model_type = request.data.get('model_type', 'exam')  # 'exam', 'smoking', 'danger', or 'critical'
 
+    # Check if file is a video based on content type or extension
+    file_type = image_file.content_type if hasattr(image_file, 'content_type') else ''
+    file_name = image_file.name.lower()
+    is_video = file_type.startswith('video/') or file_name.endswith(('.mp4', '.avi', '.mov', '.mkv', '.webm'))
+
     # Save temporary file
     import tempfile
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as temp_file:
+    suffix = '.mp4' if is_video else '.jpg'
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
         for chunk in image_file.chunks():
             temp_file.write(chunk)
         temp_path = temp_file.name
 
     try:
-        result = predict_from_image_file(temp_path, model_type)
+        if is_video:
+            # Process video - extract first frame for analysis
+            import cv2
+            cap = cv2.VideoCapture(temp_path)
+            if not cap.isOpened():
+                return Response({'error': 'Could not open video file'}, status=status.HTTP_400_BAD_REQUEST)
+
+            ret, frame = cap.read()
+            cap.release()
+
+            if not ret:
+                return Response({'error': 'Could not read video frame'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Save frame as temporary image
+            frame_path = temp_path.replace('.mp4', '_frame.jpg')
+            cv2.imwrite(frame_path, frame)
+
+            # Analyze the frame
+            result = predict_from_image_file(frame_path, model_type)
+
+            # Clean up frame file
+            if os.path.exists(frame_path):
+                os.unlink(frame_path)
+
+            # Add video metadata to result
+            result['file_type'] = 'video'
+            result['message'] = 'Video analyzed using first frame'
+        else:
+            # Process image
+            result = predict_from_image_file(temp_path, model_type)
+            result['file_type'] = 'image'
+
         return Response(result)
     finally:
-        os.unlink(temp_path)
+        if os.path.exists(temp_path):
+            os.unlink(temp_path)
 
 
 @api_view(['POST'])

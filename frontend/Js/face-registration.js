@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const targetData = localStorage.getItem('faceRegistrationTarget');
         if (!targetData) {
             alert('لم يتم تحديد الشخص المراد تسجيل وجهه');
-            window.location.href = 'login.html';
+            window.location.href = '../HTML/login.html';
             return;
         }
         targetPerson = JSON.parse(targetData);

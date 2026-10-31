@@ -15,12 +15,12 @@ let currentStaff = null;
 async function checkAuth() {
     const user = await api.getCurrentUser();
     if (!user) {
-        window.location.href = 'login.html';
+        window.location.href = '../HTML/login.html';
         return null;
     }
     const userType = user.user_type || user.type;
     if (userType !== 'administrative' && userType !== 'security' && userType !== 'service') {
-        window.location.href = 'login.html';
+        window.location.href = '../HTML/login.html';
         return null;
     }
     return user;
@@ -62,7 +62,7 @@ function loadStaffInfo() {
 
 async function logout() {
     await api.logout();
-    window.location.href = 'login.html';
+    window.location.href = '../HTML/login.html';
 }
 
 // Show section function

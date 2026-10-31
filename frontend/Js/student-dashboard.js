@@ -13,11 +13,11 @@ let currentUser = null;
 async function checkAuth() {
     const user = await api.getCurrentUser();
     if (!user) {
-        window.location.href = 'login.html';
+        window.location.href = '../HTML/login.html';
         return null;
     }
     if ((user.user_type || user.type) !== 'student') {
-        window.location.href = 'login.html';
+        window.location.href = '../HTML/login.html';
         return null;
     }
     return user;
@@ -50,7 +50,7 @@ function registerFace() {
 
 async function logout() {
     await api.logout();
-    window.location.href = 'login.html';
+    window.location.href = '../HTML/login.html';
 }
 
 // Show section function

@@ -102,10 +102,15 @@ async function loadOverview() {
 }
 
 // Load students
-function loadStudents() {
-    const students = db.getStudents();
+async function loadStudents() {
+    const students = await db.getStudents();
     const tbody = document.getElementById('studentsTableBody');
     tbody.innerHTML = '';
+
+    if (!Array.isArray(students)) {
+        console.error('students is not an array:', students);
+        return;
+    }
 
     students.forEach(student => {
         const row = document.createElement('tr');
@@ -127,10 +132,15 @@ function loadStudents() {
 }
 
 // Load teachers
-function loadTeachers() {
-    const teachers = db.getTeachers();
+async function loadTeachers() {
+    const teachers = await db.getTeachers();
     const tbody = document.getElementById('teachersTableBody');
     tbody.innerHTML = '';
+
+    if (!Array.isArray(teachers)) {
+        console.error('teachers is not an array:', teachers);
+        return;
+    }
 
     teachers.forEach(teacher => {
         const row = document.createElement('tr');
@@ -440,11 +450,16 @@ function showClassificationTab(tabName) {
     }
 }
 
-function loadDepartments() {
-    const departments = db.getDepartments();
-    const students = db.getStudents();
+async function loadDepartments() {
+    const departments = await db.getDepartments();
+    const students = await db.getStudents();
     const tbody = document.getElementById('departmentsTableBody');
     tbody.innerHTML = '';
+
+    if (!Array.isArray(departments)) {
+        console.error('departments is not an array:', departments);
+        return;
+    }
 
     departments.forEach(dept => {
         const studentCount = students.filter(s => s.departmentId === dept.id).length;
@@ -595,10 +610,15 @@ function openDepartmentModal() {
     loadStagesForDepartmentSelection();
 }
 
-function loadStagesForDepartmentSelection() {
-    const allStages = db.getStages();
+async function loadStagesForDepartmentSelection() {
+    const allStages = await db.getStages();
     const selectionContainer = document.getElementById('departmentStagesSelection');
     selectionContainer.innerHTML = '';
+
+    if (!Array.isArray(allStages)) {
+        console.error('allStages is not an array:', allStages);
+        return;
+    }
 
     allStages.forEach(stage => {
         const checkbox = document.createElement('div');

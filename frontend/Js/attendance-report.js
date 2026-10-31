@@ -425,10 +425,10 @@ function goBack() {
                 window.location.href = 'staff-dashboard.html';
                 break;
             default:
-                window.location.href = 'login.html';
+                window.location.href = '../HTML/login.html';
         }
     } else {
-        window.location.href = 'login.html';
+        window.location.href = '../HTML/login.html';
     }
 }
 
