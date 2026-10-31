@@ -31,23 +31,27 @@ class Database {
     }
 
     async getTeachers() {
+        if (!this.checkApi()) return [];
         const users = await this.api.getUsers();
-        return users.filter(user => user.user_type === 'teacher');
+        return users ? users.filter(user => user.user_type === 'teacher') : [];
     }
 
     async getAdministrativeStaff() {
+        if (!this.checkApi()) return [];
         const users = await this.api.getUsers();
-        return users.filter(user => user.user_type === 'administrative');
+        return users ? users.filter(user => user.user_type === 'administrative') : [];
     }
 
     async getSecurityStaff() {
+        if (!this.checkApi()) return [];
         const users = await this.api.getUsers();
-        return users.filter(user => user.user_type === 'security');
+        return users ? users.filter(user => user.user_type === 'security') : [];
     }
 
     async getServiceStaff() {
+        if (!this.checkApi()) return [];
         const users = await this.api.getUsers();
-        return users.filter(user => user.user_type === 'service');
+        return users ? users.filter(user => user.user_type === 'service') : [];
     }
 
     async createUser(userData) {
