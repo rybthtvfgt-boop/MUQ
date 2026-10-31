@@ -4,7 +4,7 @@ set -e
 # Run migrations
 python manage.py migrate --noinput
 
-# Create admin user if needed
+# Create or reset admin user
 python manage.py shell << 'EOF'
 from users.models import User
 if not User.objects.filter(username='muq').exists():
@@ -17,6 +17,12 @@ if not User.objects.filter(username='muq').exists():
         last_name='User'
     )
     print("Admin user 'muq' created! Password: 12345")
+else:
+    # Reset password if user exists
+    user = User.objects.get(username='muq')
+    user.set_password('12345')
+    user.save()
+    print("Admin user 'muq' password reset to: 12345")
 EOF
 
 # Create dataset directory structure
