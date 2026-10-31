@@ -7,19 +7,16 @@ python manage.py migrate --noinput
 # Create admin user if needed
 python manage.py shell << 'EOF'
 from users.models import User
-import secrets
 if not User.objects.filter(username='muq').exists():
-    # Generate a strong random password
-    admin_password = secrets.token_urlsafe(16)
     User.objects.create_superuser(
         username='muq',
         email='admin@muq.com',
-        password=admin_password,
+        password='12345',
         user_type='admin',
         first_name='Admin',
         last_name='User'
     )
-
+    print("Admin user 'muq' created! Password: 12345")
 EOF
 
 # Create dataset directory structure
